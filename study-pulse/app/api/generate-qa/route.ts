@@ -17,10 +17,8 @@ export async function POST(req: Request) {
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer); 
       textContent = await pdfToText(buffer); 
-      //console.log("Extracted text from PDF:", textContent.slice(0, 500)); 
     } else if (file.type === 'text/plain') {
       textContent = await file.text(); 
-      //console.log("Extracted text from plain text file:", textContent.slice(0, 500));
     } else {
       return NextResponse.json({ error: 'Unsupported file type' }, { status: 400 });
     }
@@ -31,16 +29,36 @@ export async function POST(req: Request) {
       messages: [
         {
           role: 'user',
-          content: `Based on the following course content: "${textContent}", generate a set of practice questions along with their answers. Make sure the questions cover the key topics and concepts.`,
+          content: `Based on the following course content: "${textContent}", generate a set of practice questions along with their answers. 
+          Format each question with the prefix 'Question: ' and each answer with the prefix 'Answer: ' so that they can be easily identified.`,
         },
       ],
       max_tokens: 1000,
     });
 
-    const generatedQnA = response.choices?.[0]?.message?.content?.split('\n\n').map(qna => qna.trim()) || [];
-    console.log("Generated questions and answers:", generatedQnA);
+    const aiResponse = response.choices?.[0]?.message?.content || '';
 
-    return NextResponse.json({ questionsAndAnswers: generatedQnA });
+    console.log("AI Response: ", aiResponse);
+
+    const regex = /\*\*Question:\s*(.*?)\*\*\s*\*\*Answer:\s*(.*?)(?=\n---|\n?$)/gs;
+
+    const questionsAndAnswers = [];
+    let match;
+    
+    while ((match = regex.exec(aiResponse)) !== null) {
+      const question = match[1].trim();
+      let answer = match[2].trim();
+
+      if (answer.endsWith('**')) {
+        answer = answer.slice(0, -2);
+      }
+
+      questionsAndAnswers.push({ question, answer });
+    }
+    
+    console.log("Extracted questions and answers:", questionsAndAnswers);
+
+    return NextResponse.json({ questionsAndAnswers });
   } catch (error) {
     console.error('Error processing request:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

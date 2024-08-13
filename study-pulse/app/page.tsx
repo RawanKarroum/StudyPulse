@@ -1,23 +1,23 @@
 'use client';
 
-import { useState, FormEvent, ChangeEvent } from 'react';
+import React, { useState, FormEvent, ChangeEvent } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const [textContent, setTextContent] = useState<string>('');
   const [file, setFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<string>('');
-  const [questionsAndAnswers, setQuestionsAndAnswers] = useState<string[]>([]);
+  const router = useRouter();
 
   const handleTextChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     setTextContent(event.target.value);
-    setFile(null); 
+    setFile(null);
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const uploadedFile = event.target.files ? event.target.files[0] : null;
-    console.log("File selected:", uploadedFile);
     setFile(uploadedFile);
-    setTextContent(''); 
+    setTextContent('');
   };
 
   const handleSubmit = async (event: FormEvent) => {
@@ -35,13 +35,11 @@ export default function Home() {
     if (file) {
       formData = new FormData();
       formData.append('file', file);
-      console.log("Submitting file:", file);
     } else if (textContent.trim()) {
       headers = {
         'Content-Type': 'application/json',
       };
       requestBody = JSON.stringify({ textContent });
-      console.log("Submitting text content:", textContent);
     }
 
     try {
@@ -51,9 +49,6 @@ export default function Home() {
         headers: headers,
       });
 
-      console.log("Response status:", response.status);
-      console.log("Response headers:", response.headers);
-
       if (!response.ok) {
         const errorData = await response.json();
         setUploadStatus(`Error: ${errorData.error}`);
@@ -61,9 +56,9 @@ export default function Home() {
       }
 
       const data = await response.json();
-      console.log("Response data:", data);
       setUploadStatus('Content processed successfully!');
-      setQuestionsAndAnswers(data.questionsAndAnswers);  
+
+      router.push(`/flashcard-page?aiResponse=${encodeURIComponent(JSON.stringify(data.questionsAndAnswers))}`);
     } catch (error) {
       setUploadStatus('Error processing content.');
       console.error('Upload Error:', error);
@@ -84,19 +79,8 @@ export default function Home() {
         <input type="file" accept=".txt,.pdf" onChange={handleFileChange} />
         <br />
         <button type="submit">Generate Questions</button>
+        <p>{uploadStatus}</p>
       </form>
-      <p>{uploadStatus}</p>
-      
-      {questionsAndAnswers.length > 0 && (
-        <div>
-          <h2>Generated Questions and Answers</h2>
-          <ul>
-            {questionsAndAnswers.map((qa, index) => (
-              <li key={index}>{qa}</li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 }
