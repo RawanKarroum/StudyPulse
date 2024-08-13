@@ -1,95 +1,71 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+import { useAuth } from '@clerk/nextjs';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
-export default function Home() {
+export default function HomePage() {
+  const { userId, isSignedIn, isLoaded } = useAuth();
+  const [userData, setUserData] = useState<any>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const handleUserAuth = async () => {
+      if (isLoaded && isSignedIn && userId) {
+        try {
+          // Try to fetch the user data from Firebase
+          const response = await fetch(`/api/get-user-data?id=${userId}`);
+          
+          if (response.ok) {
+            const data = await response.json();
+            setUserData(data);
+            console.log('User data fetched:', data);
+          } else if (response.status === 404) {
+            // User not found in Firebase, assume this is a new sign-up and add them
+            console.log('User not found, adding to Firebase:', userId);
+            const addResponse = await fetch('/api/sign-up', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                id: userId,
+                firstName: "FirstNamePlaceholder", // Replace with actual data
+                lastName: "LastNamePlaceholder",   // Replace with actual data
+                email: "EmailPlaceholder",         // Replace with actual data
+              }),
+            });
+
+            if (addResponse.ok) {
+              console.log('User added to Firebase');
+              const newData = await addResponse.json();
+              setUserData(newData);
+            } else {
+              console.error('Failed to add user to Firebase:', await addResponse.json());
+            }
+          } else {
+            console.error('Failed to fetch user data:', await response.json());
+          }
+        } catch (error) {
+          console.error('Error in handling user authentication:', error);
+        }
+      }
+    };
+
+    handleUserAuth();
+  }, [isLoaded, isSignedIn, userId]);
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.tsx</code>
-        </p>
+    <main>
+      {isSignedIn ? (
         <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+          <h2>Welcome back, {userData?.firstName}!</h2>
+          {/* Display more user data as needed */}
         </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+      ) : (
+        <div>
+          <p>Please sign in or sign up to access your account.</p>
+        </div>
+      )}
     </main>
   );
 }
