@@ -1,102 +1,74 @@
-'use client';
+"use client";
+import { useAuth, useUser } from '@clerk/nextjs';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
-import { useState, FormEvent, ChangeEvent } from 'react';
+export default function HomePage() {
+  const { userId, isSignedIn, isLoaded } = useAuth();
+  const { user } = useUser();
+  const [userData, setUserData] = useState<any>(null);
+  const router = useRouter();
 
-export default function Home() {
-  const [textContent, setTextContent] = useState<string>('');
-  const [file, setFile] = useState<File | null>(null);
-  const [uploadStatus, setUploadStatus] = useState<string>('');
-  const [questionsAndAnswers, setQuestionsAndAnswers] = useState<string[]>([]);
+  useEffect(() => {
+    const handleUserAuth = async () => {
+      if (isLoaded && isSignedIn && userId) {
+        try {
+          // Try to fetch the user data from Firebase
+          const response = await fetch(`/api/get-user-data?id=${userId}`);
+          
+          if (response.ok) {
+            const data = await response.json();
+            setUserData(data);
+            console.log('User data fetched:', data);
+          } else if (response.status === 404) {
+            // User not found in Firebase, assume this is a new sign-up and add them
+            console.log('User not found, adding to Firebase:', userId);
+            console.log('user: ', user);
+            const newUserData = {
+              id: userId,
+              firstName: user?.firstName,
+              lastName: user?.lastName,
+              email: user?.primaryEmailAddress?.emailAddress,
+              membership: 'free',
+            };
+            const addResponse = await fetch('/api/sign-up', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(newUserData),
+            });
 
-  const handleTextChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
-    setTextContent(event.target.value);
-    setFile(null); 
-  };
-
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const uploadedFile = event.target.files ? event.target.files[0] : null;
-    console.log("File selected:", uploadedFile);
-    setFile(uploadedFile);
-    setTextContent(''); 
-  };
-
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-
-    if (!textContent.trim() && !file) {
-      setUploadStatus('Please enter text content or upload a file.');
-      return;
-    }
-
-    let formData: FormData | null = null;
-    let requestBody: any = null;
-    let headers: HeadersInit = {};
-
-    if (file) {
-      formData = new FormData();
-      formData.append('file', file);
-      console.log("Submitting file:", file);
-    } else if (textContent.trim()) {
-      headers = {
-        'Content-Type': 'application/json',
-      };
-      requestBody = JSON.stringify({ textContent });
-      console.log("Submitting text content:", textContent);
-    }
-
-    try {
-      const response = await fetch('/api/generate-qa', {
-        method: 'POST',
-        body: formData || requestBody,
-        headers: headers,
-      });
-
-      console.log("Response status:", response.status);
-      console.log("Response headers:", response.headers);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        setUploadStatus(`Error: ${errorData.error}`);
-        return;
+            if (addResponse.ok) {
+              console.log('User added to Firebase');
+              setUserData(newUserData);
+            } else {
+              console.error('Failed to add user to Firebase:', await addResponse.json());
+            }
+          } else {
+            console.error('Failed to fetch user data:', await response.json());
+          }
+        } catch (error) {
+          console.error('Error in handling user authentication:', error);
+        }
       }
+    };
 
-      const data = await response.json();
-      console.log("Response data:", data);
-      setUploadStatus('Content processed successfully!');
-      setQuestionsAndAnswers(data.questionsAndAnswers);  
-    } catch (error) {
-      setUploadStatus('Error processing content.');
-      console.error('Upload Error:', error);
-    }
-  };
+    handleUserAuth();
+  }, [isLoaded, isSignedIn, userId]);
 
   return (
-    <div>
-      <form onSubmit={handleSubmit}>
-        <textarea
-          rows={10}
-          cols={50}
-          value={textContent}
-          onChange={handleTextChange}
-          placeholder="Enter your course content here..."
-        />
-        <br />
-        <input type="file" accept=".txt,.pdf" onChange={handleFileChange} />
-        <br />
-        <button type="submit">Generate Questions</button>
-      </form>
-      <p>{uploadStatus}</p>
-      
-      {questionsAndAnswers.length > 0 && (
+    <main>
+      {isSignedIn ? (
         <div>
-          <h2>Generated Questions and Answers</h2>
-          <ul>
-            {questionsAndAnswers.map((qa, index) => (
-              <li key={index}>{qa}</li>
-            ))}
-          </ul>
+          <h2>Welcome back, {userData?.firstName}!</h2>
+          {/* Display more user data as needed */}
+        </div>
+      ) : (
+        <div>
+          <p>Please sign in or sign up to access your account.</p>
         </div>
       )}
-    </div>
+    </main>
   );
 }
