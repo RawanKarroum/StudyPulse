@@ -10,6 +10,7 @@ import TimerModal from '../../components/TimerModal/page';
 import Navbar from '../../components/RightNavbar/page';
 import CountdownTimer from '../../components/CountdownTimer/page';
 import { createTheme } from '@mui/material/styles';
+import LeftNavbar from '../../components/LeftNavbar/page'; // Import the LeftNavbar
 
 const FlashcardPage: React.FC = () => {
     const [questionsAndAnswers, setQuestionsAndAnswers] = useState<{ question: string, answer: string }[]>([]);
@@ -132,122 +133,124 @@ const FlashcardPage: React.FC = () => {
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
-            <Box
-                display="flex"
-                justifyContent="center"
-                alignItems="center"
-                height="100vh"
-                flexDirection="column"
-                sx={{
-                    padding: '16px',
-                    backgroundColor: theme.palette.background.default,
-                    position: 'relative',
-                }}
-            >
-                <Typography variant="h4" gutterBottom sx={{ position: 'absolute', top: '10%', textAlign: 'center' }}>
-                    {decodedTitle}
-                </Typography>
-
+            <Box sx={{ display: 'flex', height: '100vh', position: 'relative' }}>
+                <LeftNavbar /> {/* Add the LeftNavbar here */}
                 <Box
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center"
+                    flexDirection="column"
                     sx={{
-                        perspective: '1000px',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        flexDirection: 'column',
+                        padding: '16px',
+                        backgroundColor: theme.palette.background.default,
+                        flexGrow: 1,
                     }}
                 >
+                    <Typography variant="h4" gutterBottom sx={{ position: 'absolute', top: '10%', textAlign: 'center' }}>
+                        {decodedTitle}
+                    </Typography>
+
                     <Box
-                        onClick={handleFlip}
                         sx={{
-                            width: '800px', 
-                            height: '450px',
-                            position: 'relative',
-                            transformStyle: 'preserve-3d',
-                            transition: 'transform 0.6s',
-                            transform: isFlipped ? 'rotateX(180deg)' : 'none',
+                            perspective: '1000px',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            flexDirection: 'column',
                         }}
                     >
-                        <Card
+                        <Box
+                            onClick={handleFlip}
                             sx={{
-                                width: '100%',
-                                height: '100%',
-                                position: 'absolute',
-                                backfaceVisibility: 'hidden',
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                backgroundColor: '#f0f0f0',
+                                width: '800px', 
+                                height: '450px',
+                                position: 'relative',
+                                transformStyle: 'preserve-3d',
+                                transition: 'transform 0.6s',
+                                transform: isFlipped ? 'rotateX(180deg)' : 'none',
                             }}
                         >
-                            <CardContent>
-                                <Typography variant="h5">
-                                    {currentQA?.question}
-                                </Typography>
-                            </CardContent>
-                        </Card>
+                            <Card
+                                sx={{
+                                    width: '100%',
+                                    height: '100%',
+                                    position: 'absolute',
+                                    backfaceVisibility: 'hidden',
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    backgroundColor: '#f0f0f0',
+                                }}
+                            >
+                                <CardContent>
+                                    <Typography variant="h5">
+                                        {currentQA?.question}
+                                    </Typography>
+                                </CardContent>
+                            </Card>
 
-                        <Card
+                            <Card
+                                sx={{
+                                    width: '100%',
+                                    height: '100%',
+                                    position: 'absolute',
+                                    backfaceVisibility: 'hidden',
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    backgroundColor: '#f0f0f0',
+                                    transform: 'rotateX(180deg)',
+                                }}
+                            >
+                                <CardContent>
+                                    <Typography variant="h5">
+                                        {currentQA?.answer}
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        </Box>
+
+                        <Box display="flex" alignItems="center" mt={2}>
+                            <IconButton onClick={handlePrev} sx={{ zIndex: 1 }}>
+                                <ChevronLeft sx={{ fontSize: 50, color: theme.palette.primary.main }} />
+                            </IconButton>
+                            <Typography variant="body2" sx={{ fontSize: 24, marginX: 2, color: theme.palette.primary.main }}>
+                                {currentCardIndex + 1} / {questionsAndAnswers.length}
+                            </Typography>
+                            <IconButton onClick={handleNext} sx={{ zIndex: 1 }}>
+                                <ChevronRight sx={{ fontSize: 50, color: theme.palette.primary.main }} />
+                            </IconButton>
+                        </Box>
+
+                        <LinearProgress
+                            variant="determinate"
+                            value={progressValue}
                             sx={{
                                 width: '100%',
-                                height: '100%',
-                                position: 'absolute',
-                                backfaceVisibility: 'hidden',
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                backgroundColor: '#f0f0f0',
-                                transform: 'rotateX(180deg)',
+                                height: '8px',
+                                borderRadius: '5px',
+                                marginTop: '16px',
+                                '& .MuiLinearProgress-bar': {
+                                    backgroundColor: theme.palette.primary.main,
+                                },
                             }}
-                        >
-                            <CardContent>
-                                <Typography variant="h5">
-                                    {currentQA?.answer}
-                                </Typography>
-                            </CardContent>
-                        </Card>
+                        />
                     </Box>
 
-                    <Box display="flex" alignItems="center" mt={2}>
-                        <IconButton onClick={handlePrev} sx={{ zIndex: 1 }}>
-                            <ChevronLeft sx={{ fontSize: 50, color: theme.palette.primary.main }} />
-                        </IconButton>
-                        <Typography variant="body2" sx={{ fontSize: 24, marginX: 2, color: theme.palette.primary.main }}>
-                            {currentCardIndex + 1} / {questionsAndAnswers.length}
-                        </Typography>
-                        <IconButton onClick={handleNext} sx={{ zIndex: 1 }}>
-                            <ChevronRight sx={{ fontSize: 50, color: theme.palette.primary.main }} />
-                        </IconButton>
-                    </Box>
+                    <Navbar handleTimerToggle={handleToggleTimer} timerOn={timerOn} />
 
-                    <LinearProgress
-                        variant="determinate"
-                        value={progressValue}
-                        sx={{
-                            width: '100%',
-                            height: '8px',
-                            borderRadius: '5px',
-                            marginTop: '16px',
-                            '& .MuiLinearProgress-bar': {
-                                backgroundColor: theme.palette.primary.main,
-                            },
-                        }}
+                    <TimerModal
+                        open={timerModalOpen}
+                        onClose={() => setTimerModalOpen(false)}
+                        timerValue={timerValue}
+                        onTimerChange={handleTimerChange}
+                        startTimer={startTimer}
                     />
+
+                    {countdown !== null && (
+                        <CountdownTimer countdown={countdown} onTimerEnd={handleTimerEnd} />
+                    )}
                 </Box>
-
-                <Navbar handleTimerToggle={handleToggleTimer} timerOn={timerOn} />
-
-                <TimerModal
-                    open={timerModalOpen}
-                    onClose={() => setTimerModalOpen(false)}
-                    timerValue={timerValue}
-                    onTimerChange={handleTimerChange}
-                    startTimer={startTimer}
-                />
-
-                {countdown !== null && (
-                    <CountdownTimer countdown={countdown} onTimerEnd={handleTimerEnd} />
-                )}
             </Box>
         </ThemeProvider>
     );

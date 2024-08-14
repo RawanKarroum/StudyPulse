@@ -27,19 +27,6 @@ const Navbar: React.FC<NavbarProps> = ({ handleTimerToggle, timerOn }) => {
     >
       <FormControlLabel
         control={<Switch />}
-        label="Track Progress"
-        labelPlacement="end"
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          '& .MuiTypography-root': {
-            fontSize: '18px',
-          },
-        }}
-      />
-
-      <FormControlLabel
-        control={<Switch />}
         label="Randomize Cards"
         labelPlacement="end"
         sx={{
@@ -54,19 +41,6 @@ const Navbar: React.FC<NavbarProps> = ({ handleTimerToggle, timerOn }) => {
       <FormControlLabel
         control={<Switch checked={timerOn} onChange={handleTimerToggle} />}
         label="Timer"
-        labelPlacement="end"
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          '& .MuiTypography-root': {
-            fontSize: '18px',
-          },
-        }}
-      />
-
-      <FormControlLabel
-        control={<Switch />}
-        label="Quiz Me"
         labelPlacement="end"
         sx={{
           display: 'flex',
