@@ -2,10 +2,11 @@ import React from 'react';
 import { Box, Switch, FormControlLabel } from '@mui/material';
 
 interface NavbarProps {
-  handleTimerToggle: (event: React.ChangeEvent<HTMLInputElement>) => void;
-}
+    handleTimerToggle: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    timerOn: boolean;
+  }
 
-const Navbar: React.FC<NavbarProps> = ({ handleTimerToggle }) => {
+const Navbar: React.FC<NavbarProps> = ({ handleTimerToggle, timerOn }) => {
   return (
     <Box
       sx={{
@@ -49,16 +50,15 @@ const Navbar: React.FC<NavbarProps> = ({ handleTimerToggle }) => {
           },
         }}
       />
-
       <FormControlLabel
-        control={<Switch onChange={handleTimerToggle} />}
+        control={<Switch checked={timerOn} onChange={handleTimerToggle} />}
         label="Timer"
         labelPlacement="start"
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
           '& .MuiTypography-root': {
-            fontSize: '18px', 
+            fontSize: '18px',
           },
         }}
       />
