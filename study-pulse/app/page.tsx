@@ -8,7 +8,7 @@ export default function HomePage() {
 
   useEffect(() => {
     // Automatically redirect to the landing page
-    router.push('/landing');
+    router.push('/signin');
   }, [router]);
 
   return null; // Since we're redirecting, there's no need to render anything.

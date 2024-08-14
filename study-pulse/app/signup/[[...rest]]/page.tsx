@@ -29,24 +29,9 @@ export default function LandingPage() {
         height: "100vh",
       }}
     >
-      <h1>Welcome to Study Pulse</h1>
-      {showSignUp ? (
-        <>
+      <>
           <SignUp forceRedirectUrl="/dashboard" />
-          <p>
-            Already have an account?{" "}
-            <button onClick={() => setShowSignUp(false)}>Sign In</button>
-          </p>
         </>
-      ) : (
-        <>
-          <SignIn forceRedirectUrl="/dashboard" />
-          <p>
-            Don&apos;t have an account?{" "}
-            <button onClick={() => setShowSignUp(true)}>Sign Up</button>
-          </p>
-        </>
-      )}
     </Container>
   );
 }
