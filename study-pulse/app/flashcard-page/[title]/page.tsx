@@ -1,22 +1,25 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { Box, Card, CardContent, Typography, IconButton, Button } from '@mui/material';
 import { ArrowBackIos, ArrowForwardIos } from '@mui/icons-material';
-import { useSearchParams } from 'next/navigation';
 
 const FlashcardPage: React.FC = () => {
   const [questionsAndAnswers, setQuestionsAndAnswers] = useState<{ question: string, answer: string }[]>([]);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const { title } = useParams();
 
   useEffect(() => {
     const aiResponse = searchParams.get('aiResponse');
 
     if (aiResponse) {
       try {
-        const data = JSON.parse(aiResponse);
+        const data = JSON.parse(decodeURIComponent(aiResponse));
         setQuestionsAndAnswers(data); 
         console.log("Questions and Answers received:", data); 
       } catch (error) {
@@ -59,6 +62,10 @@ const FlashcardPage: React.FC = () => {
         backgroundColor: '#ffffff',
       }}
     >
+      <Typography variant="h4" gutterBottom>
+        {title}
+      </Typography>
+
       <Box display="flex" alignItems="center">
         <IconButton onClick={handlePrev} sx={{ zIndex: 1 }}>
           <ArrowBackIos sx={{ fontSize: 40 }} />
