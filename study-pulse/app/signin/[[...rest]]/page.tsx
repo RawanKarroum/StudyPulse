@@ -6,7 +6,7 @@ import { useUserData } from "../../hooks/useUserData";
 import { useRouter } from "next/navigation";
 import { Container } from "@mui/material";
 
-export default function LandingPage() {
+export default function SignInPage() {
   const [showSignUp, setShowSignUp] = useState(false);
   const { isSignedIn } = useUserData(); // Use the custom hook
   const router = useRouter();

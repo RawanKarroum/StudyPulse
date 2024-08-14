@@ -8,6 +8,7 @@ export async function POST(request: NextRequest) {
   try {
     // Add the user to Firestore
     await setDoc(doc(db, 'users', id), {
+      id,
       firstName,
       lastName,
       email,

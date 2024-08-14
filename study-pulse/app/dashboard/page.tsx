@@ -60,6 +60,7 @@ export default function Dashboard() {
     return <p>Please sign in to access the dashboard.</p>;
   }
 
+  console.log("User ID:", userData?.id);
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -268,8 +269,6 @@ export default function Dashboard() {
               />
             </Box>
             
-
-            {/* Repeat similar boxes for additional flashcards */}
           </Box>
         </Box>
       </Container>
