@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc } from "firebase/firestore";
 import { db } from '../../config/firebase';
-import { Box, Card, CardContent, Typography, IconButton, Button } from '@mui/material';
+import { Box, Card, CardContent, Typography, IconButton } from '@mui/material';
 import { ArrowBackIos, ArrowForwardIos } from '@mui/icons-material';
 
 const FlashcardPage: React.FC = () => {
@@ -14,26 +14,25 @@ const FlashcardPage: React.FC = () => {
   const { title } = useParams();
   const router = useRouter();
 
-useEffect(() => {
-  const fetchFlashcards = async () => {
-    try {
-      const docRef = doc(db, "flashcards", decodeURIComponent(title as string));
-      console.log("Fetching document with title:", decodeURIComponent(title as string)); 
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        console.log("Document data:", docSnap.data()); 
-        setQuestionsAndAnswers(docSnap.data().flashcards);
-      } else {
-        console.log("No such document!");
+  useEffect(() => {
+    const fetchFlashcards = async () => {
+      try {
+        const docRef = doc(db, "flashcards", decodeURIComponent(title as string));
+        console.log("Fetching document with title:", decodeURIComponent(title as string)); 
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          console.log("Document data:", docSnap.data()); 
+          setQuestionsAndAnswers(docSnap.data().flashcards);
+        } else {
+          console.log("No such document!");
+        }
+      } catch (error) {
+        console.error("Error fetching flashcards:", error);
       }
-    } catch (error) {
-      console.error("Error fetching flashcards:", error);
-    }
-  };
+    };
 
-  fetchFlashcards();
-}, [title]);
-
+    fetchFlashcards();
+  }, [title]);
 
   const handleNext = () => {
     setIsFlipped(false);
@@ -68,58 +67,90 @@ useEffect(() => {
       sx={{
         padding: '16px',
         backgroundColor: '#ffffff',
+        position: 'relative',
       }}
     >
-      <Typography variant="h4" gutterBottom>
+      <Typography 
+        variant="h3" 
+        gutterBottom 
+        sx={{ position: 'absolute', top: '20%', textAlign: 'center' }} 
+      >
         {decodedTitle}
       </Typography>
 
-      <Box display="flex" alignItems="center">
-        <IconButton onClick={handlePrev} sx={{ zIndex: 1 }}>
-          <ArrowBackIos sx={{ fontSize: 40 }} />
-        </IconButton>
-        
-        <Card
-          onClick={handleFlip}
-          sx={{
-            width: 400,
-            height: 250,
-            cursor: 'pointer',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            textAlign: 'center',
-            marginX: 2,
-            backgroundColor: '#f0f0f0',
-          }}
-        >
-          <CardContent>
-            <Typography variant="h5">
-              {isFlipped ? currentQA?.answer : currentQA?.question}
-            </Typography>
-          </CardContent>
-        </Card>
-
-        <IconButton onClick={handleNext} sx={{ zIndex: 1 }}>
-          <ArrowForwardIos sx={{ fontSize: 40 }} />
-        </IconButton>
-      </Box>
-
-      <Button
-        variant="contained"
-        onClick={handleFlip}
+      <Box
         sx={{
-          mt: 2,
-          backgroundColor: '#1976d2',
-          color: '#fff',
-          '&:hover': {
-            backgroundColor: '#115293',
-          },
-          zIndex: 1,
+          perspective: '1000px',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexDirection: 'column',
+          marginTop: '10%', 
         }}
       >
-        Flip Card
-      </Button>
+        <Box
+          onClick={handleFlip}
+          sx={{
+            width: '700px',  
+            height: '400px',  
+            position: 'relative',
+            transformStyle: 'preserve-3d',
+            transition: 'transform 0.6s',
+            transform: isFlipped ? 'rotateX(180deg)' : 'none',
+          }}
+        >
+          <Card
+            sx={{
+              width: '100%',
+              height: '100%',
+              position: 'absolute',
+              backfaceVisibility: 'hidden',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: '#f0f0f0',
+            }}
+          >
+            <CardContent>
+              <Typography variant="h5">
+                {currentQA?.question}
+              </Typography>
+            </CardContent>
+          </Card>
+
+          <Card
+            sx={{
+              width: '100%',
+              height: '100%',
+              position: 'absolute',
+              backfaceVisibility: 'hidden',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: '#f0f0f0',
+              transform: 'rotateX(180deg)',
+            }}
+          >
+            <CardContent>
+              <Typography variant="h5">
+                {currentQA?.answer}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Box>
+
+        <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
+          <IconButton onClick={handlePrev} sx={{ zIndex: 1, mr: 2 }}>
+            <ArrowBackIos sx={{ fontSize: 40 }} />
+          </IconButton>
+          <Typography variant="body1" sx={{ fontSize: '18px', mx: 2 }}>
+            {currentCardIndex + 1} / {questionsAndAnswers.length}
+          </Typography>
+          <IconButton onClick={handleNext} sx={{ zIndex: 1, ml: 2 }}>
+            <ArrowForwardIos sx={{ fontSize: 40 }} />
+          </IconButton>
+        </Box>
+      </Box>
     </Box>
   );
 };
