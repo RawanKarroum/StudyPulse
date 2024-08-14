@@ -1,24 +1,39 @@
 'use client';
 
-import React, { useState, FormEvent, ChangeEvent } from 'react';
+import React, { useEffect, useState, FormEvent, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
-  TextareaAutosize,
-} from '@mui/material';
+import { setDoc, doc, collection, getDocs } from 'firebase/firestore';
+import { db } from './config/firebase'; 
+import { Box, Card, CardContent, Typography, Grid, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, TextareaAutosize } from '@mui/material';
 
-export default function Home() {
+const HomePage: React.FC = () => {
+  const [flashcardSets, setFlashcardSets] = useState<{ title: string }[]>([]);
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState<string>('');
   const [textContent, setTextContent] = useState<string>('');
   const [file, setFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<string>('');
   const router = useRouter();
+
+  useEffect(() => {
+    const fetchFlashcardSets = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "flashcards"));
+        const flashcards = querySnapshot.docs.map(doc => ({
+          title: doc.id, 
+        }));
+        setFlashcardSets(flashcards);
+      } catch (error) {
+        console.error("Error fetching flashcard sets: ", error);
+      }
+    };
+
+    fetchFlashcardSets();
+  }, []);
+
+  const handleCardClick = (title: string) => {
+    router.push(`/flashcard-page/${encodeURIComponent(title)}`);
+  };
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -30,7 +45,7 @@ export default function Home() {
 
   const handleTextChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     setTextContent(event.target.value);
-    setFile(null);
+    setFile(null); 
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -86,6 +101,10 @@ export default function Home() {
       const data = await response.json();
       setUploadStatus('Content processed successfully!');
 
+      await setDoc(doc(db, 'flashcards', title), {
+        flashcards: data.questionsAndAnswers
+      });
+
       router.push(`/flashcard-page/${encodeURIComponent(title)}?aiResponse=${encodeURIComponent(JSON.stringify(data.questionsAndAnswers))}`);
     } catch (error) {
       setUploadStatus('Error processing content.');
@@ -94,7 +113,7 @@ export default function Home() {
   };
 
   return (
-    <div>
+    <Box sx={{ padding: '16px' }}>
       <Button variant="contained" color="primary" onClick={handleClickOpen}>
         Create Flashcard Set
       </Button>
@@ -136,6 +155,27 @@ export default function Home() {
       </Dialog>
 
       <p>{uploadStatus}</p>
-    </div>
+
+      {flashcardSets.length === 0 ? (
+        <Typography variant="h6">No flashcards found.</Typography>
+      ) : (
+        <Grid container spacing={2} sx={{ marginTop: '16px' }}>
+          {flashcardSets.map((flashcard, index) => (
+            <Grid item xs={12} sm={6} md={4} key={index}>
+              <Card
+                sx={{ cursor: 'pointer' }}
+                onClick={() => handleCardClick(flashcard.title)}
+              >
+                <CardContent>
+                  <Typography variant="h6">{flashcard.title}</Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
+    </Box>
   );
-}
+};
+
+export default HomePage;

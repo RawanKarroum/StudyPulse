@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { doc, getDoc } from "firebase/firestore";
+import { db } from '../../config/firebase';
 import { Box, Card, CardContent, Typography, IconButton, Button } from '@mui/material';
 import { ArrowBackIos, ArrowForwardIos } from '@mui/icons-material';
 
@@ -10,23 +11,29 @@ const FlashcardPage: React.FC = () => {
   const [questionsAndAnswers, setQuestionsAndAnswers] = useState<{ question: string, answer: string }[]>([]);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const { title } = useParams();
+  const router = useRouter();
 
-  useEffect(() => {
-    const aiResponse = searchParams.get('aiResponse');
-
-    if (aiResponse) {
-      try {
-        const data = JSON.parse(decodeURIComponent(aiResponse));
-        setQuestionsAndAnswers(data); 
-        console.log("Questions and Answers received:", data); 
-      } catch (error) {
-        console.error('Error parsing AI response:', error);
+useEffect(() => {
+  const fetchFlashcards = async () => {
+    try {
+      const docRef = doc(db, "flashcards", decodeURIComponent(title as string));
+      console.log("Fetching document with title:", decodeURIComponent(title as string)); 
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        console.log("Document data:", docSnap.data()); 
+        setQuestionsAndAnswers(docSnap.data().flashcards);
+      } else {
+        console.log("No such document!");
       }
+    } catch (error) {
+      console.error("Error fetching flashcards:", error);
     }
-  }, [searchParams]);
+  };
+
+  fetchFlashcards();
+}, [title]);
+
 
   const handleNext = () => {
     setIsFlipped(false);
@@ -45,10 +52,11 @@ const FlashcardPage: React.FC = () => {
   };
 
   if (!questionsAndAnswers.length) {
-    return <Typography variant="h6">No questions and answers available.</Typography>;
+    return <Typography variant="h6">No flashcards found.</Typography>;
   }
 
   const currentQA = questionsAndAnswers[currentCardIndex];
+  const decodedTitle = decodeURIComponent(title as string);
 
   return (
     <Box
@@ -63,7 +71,7 @@ const FlashcardPage: React.FC = () => {
       }}
     >
       <Typography variant="h4" gutterBottom>
-        {title}
+        {decodedTitle}
       </Typography>
 
       <Box display="flex" alignItems="center">
