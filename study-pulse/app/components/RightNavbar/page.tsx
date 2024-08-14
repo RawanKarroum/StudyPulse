@@ -10,13 +10,13 @@ const Navbar: React.FC<NavbarProps> = ({ handleTimerToggle, timerOn }) => {
   return (
     <Box
       sx={{
-        width: '150px',
-        height: '500px', 
+        width: '180px',  
+        height: '500px',
         backgroundColor: '#f0f0f0',
         borderRadius: '12px',
         padding: '16px',
         position: 'absolute',
-        top: '25%', 
+        top: '25%',
         right: '5%',
         display: 'flex',
         flexDirection: 'column',
@@ -28,12 +28,12 @@ const Navbar: React.FC<NavbarProps> = ({ handleTimerToggle, timerOn }) => {
       <FormControlLabel
         control={<Switch />}
         label="Track Progress"
-        labelPlacement="start"
+        labelPlacement="end"
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
           '& .MuiTypography-root': {
-            fontSize: '18px', 
+            fontSize: '18px',
           },
         }}
       />
@@ -41,19 +41,20 @@ const Navbar: React.FC<NavbarProps> = ({ handleTimerToggle, timerOn }) => {
       <FormControlLabel
         control={<Switch />}
         label="Randomize Cards"
-        labelPlacement="start"
+        labelPlacement="end"
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
           '& .MuiTypography-root': {
-            fontSize: '18px', 
+            fontSize: '18px',
           },
         }}
       />
+
       <FormControlLabel
         control={<Switch checked={timerOn} onChange={handleTimerToggle} />}
         label="Timer"
-        labelPlacement="start"
+        labelPlacement="end"
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -66,12 +67,12 @@ const Navbar: React.FC<NavbarProps> = ({ handleTimerToggle, timerOn }) => {
       <FormControlLabel
         control={<Switch />}
         label="Quiz Me"
-        labelPlacement="start"
+        labelPlacement="end"
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
           '& .MuiTypography-root': {
-            fontSize: '18px', 
+            fontSize: '18px',
           },
         }}
       />

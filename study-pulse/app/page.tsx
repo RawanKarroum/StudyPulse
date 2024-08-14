@@ -31,6 +31,11 @@ const HomePage: React.FC = () => {
     fetchFlashcardSets();
   }, []);
 
+  // useEffect(() => {
+  //   // Automatically redirect to the landing page
+  //   router.push('/signin');
+  // }, [router]);
+
   const handleCardClick = (title: string) => {
     router.push(`/flashcard-page/${encodeURIComponent(title)}`);
   };
