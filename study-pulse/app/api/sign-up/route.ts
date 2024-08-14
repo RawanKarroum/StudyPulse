@@ -3,7 +3,7 @@ import { db } from '@/config/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 
 export async function POST(request: NextRequest) {
-  const { id, firstName, lastName, email } = await request.json();
+  const { id, firstName, lastName, email, membership } = await request.json();
 
   try {
     // Add the user to Firestore
@@ -12,6 +12,7 @@ export async function POST(request: NextRequest) {
       lastName,
       email,
       createdAt: new Date(),
+      membership
     });
 
     return NextResponse.json({ message: 'User added to Firebase' }, { status: 200 });

@@ -1,10 +1,11 @@
 "use client";
-import { useAuth } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function HomePage() {
   const { userId, isSignedIn, isLoaded } = useAuth();
+  const { user } = useUser();
   const [userData, setUserData] = useState<any>(null);
   const router = useRouter();
 
@@ -22,23 +23,25 @@ export default function HomePage() {
           } else if (response.status === 404) {
             // User not found in Firebase, assume this is a new sign-up and add them
             console.log('User not found, adding to Firebase:', userId);
+            console.log('user: ', user);
+            const newUserData = {
+              id: userId,
+              firstName: user?.firstName,
+              lastName: user?.lastName,
+              email: user?.primaryEmailAddress?.emailAddress,
+              membership: 'free',
+            };
             const addResponse = await fetch('/api/sign-up', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({
-                id: userId,
-                firstName: "FirstNamePlaceholder", // Replace with actual data
-                lastName: "LastNamePlaceholder",   // Replace with actual data
-                email: "EmailPlaceholder",         // Replace with actual data
-              }),
+              body: JSON.stringify(newUserData),
             });
 
             if (addResponse.ok) {
               console.log('User added to Firebase');
-              const newData = await addResponse.json();
-              setUserData(newData);
+              setUserData(newUserData);
             } else {
               console.error('Failed to add user to Firebase:', await addResponse.json());
             }
