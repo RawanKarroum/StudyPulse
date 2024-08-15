@@ -1,12 +1,15 @@
-'use client'
+'use client';
 
 import React, { useState } from 'react';
 import { Box, IconButton, Modal, Typography, TextField, Button } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { doc, updateDoc, arrayUnion } from "firebase/firestore";
-import { db } from '../../config/firebase';
 
-const AddButton: React.FC<{ title: string, onAdd: (question: string, answer: string) => void }> = ({ title, onAdd }) => {
+interface AddButtonProps {
+  title: string;
+  onAdd: (question: string, answer: string) => void;
+}
+
+const AddButton: React.FC<AddButtonProps> = ({ title, onAdd }) => {
   const [open, setOpen] = useState(false);
   const [newQuestion, setNewQuestion] = useState('');
   const [newAnswer, setNewAnswer] = useState('');
@@ -18,9 +21,11 @@ const AddButton: React.FC<{ title: string, onAdd: (question: string, answer: str
     setNewAnswer('');
   };
 
-  const handleAdd = async () => {
-    onAdd(newQuestion, newAnswer);
-    handleClose();
+  const handleAdd = () => {
+    if (newQuestion.trim() && newAnswer.trim()) {
+      onAdd(newQuestion, newAnswer);
+      handleClose();
+    }
   };
 
   return (
@@ -72,7 +77,7 @@ const AddButton: React.FC<{ title: string, onAdd: (question: string, answer: str
           }}
         >
           <Typography variant="h6" component="h2" gutterBottom>
-            Add a New Question
+            {title}
           </Typography>
           <TextField
             fullWidth
