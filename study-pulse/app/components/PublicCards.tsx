@@ -26,7 +26,11 @@ interface FlashcardSet {
   userPhoto: string;
 }
 
-export default function PublicCards({ flashcardSets }: { flashcardSets: FlashcardSet[] }) {
+export default function PublicCards({
+  flashcardSets,
+}: {
+  flashcardSets: FlashcardSet[];
+}) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const { userData, isSignedIn } = useUserData(); // Use userData to check membership level
@@ -45,9 +49,10 @@ export default function PublicCards({ flashcardSets }: { flashcardSets: Flashcar
     setSearchQuery(event.target.value);
   };
 
-  const filteredFlashcards = flashcardSets.filter((flashcard) =>
-    flashcard.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    flashcard.userName.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredFlashcards = flashcardSets.filter(
+    (flashcard) =>
+      flashcard.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      flashcard.userName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const theme = createTheme({
@@ -96,7 +101,7 @@ export default function PublicCards({ flashcardSets }: { flashcardSets: Flashcar
   });
 
   if (!isSignedIn) {
-    return <p>Please sign in to access the public flashcards.</p>;
+    router.push("/signin");
   }
 
   return (
@@ -181,7 +186,11 @@ export default function PublicCards({ flashcardSets }: { flashcardSets: Flashcar
                     onClick={() => handleCardClick(flashcard.title)}
                   >
                     <CardContent sx={{ textAlign: "center" }}>
-                      <Typography variant="h6" component="div" sx={{ color: "#fff" }}>
+                      <Typography
+                        variant="h6"
+                        component="div"
+                        sx={{ color: "#fff" }}
+                      >
                         {flashcard.title}
                       </Typography>
                       <Chip
@@ -192,8 +201,18 @@ export default function PublicCards({ flashcardSets }: { flashcardSets: Flashcar
                           color: theme.palette.secondary.main,
                         }}
                       />
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", marginTop: 2 }}>
-                        <Avatar src={flashcard.userPhoto} alt={flashcard.userName} />
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          marginTop: 2,
+                        }}
+                      >
+                        <Avatar
+                          src={flashcard.userPhoto}
+                          alt={flashcard.userName}
+                        />
                         <Typography variant="body1" sx={{ marginLeft: 2 }}>
                           {flashcard.userName}
                         </Typography>

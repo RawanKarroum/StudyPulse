@@ -1,6 +1,6 @@
 "use client";
 
-import { AppBar, Toolbar, Tabs, Tab, Box, Button } from "@mui/material";
+import { AppBar, Toolbar, Tabs, Tab, Box, Button, Tooltip } from "@mui/material";
 import { UserButton } from "@clerk/nextjs";
 import { useRouter } from 'next/navigation';
 import { useUserData } from '../hooks/useUserData'; // Adjust the import according to your file structure
@@ -22,13 +22,27 @@ export default function Navbar() {
       <Toolbar>
         <Tabs>
           <Tab label="Dashboard" onClick={handleDashboardClick} sx={{ color: 'white' }}/>
-          {/* Only render the Browse Sets tab if the membership is not free */}
-          {userData?.membership !== 'free' && (
-            <Tab label="Browse Sets" onClick={() => router.push('/public-flash-cards')} sx={{ color: 'white' }}/>
+          {userData?.membership === 'free' ? (
+            <Tooltip title="Buy the membership to access" arrow>
+              <span>
+                <Tab
+                  label="Browse Sets"
+                  sx={{
+                    color: 'rgba(255, 255, 255, 0.5)', // Less visible
+                    pointerEvents: 'none', // Make it unclickable
+                  }}
+                />
+              </span>
+            </Tooltip>
+          ) : (
+            <Tab
+              label="Browse Sets"
+              onClick={() => router.push('/public-flash-cards')}
+              sx={{ color: 'white' }}
+            />
           )}
         </Tabs>
         <Box sx={{ flexGrow: 1 }} />
-        {/* Conditionally render the subscription button */}
         {userData?.membership === 'free' && (
           <Button
             variant="contained"
@@ -50,7 +64,7 @@ export default function Navbar() {
             Upgrade to Study Pulse Plus
           </Button>
         )}
-        <UserButton />
+        <UserButton afterSignOutUrl="/signin" />
       </Toolbar>
     </AppBar>
   );

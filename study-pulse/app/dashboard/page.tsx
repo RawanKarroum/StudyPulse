@@ -18,6 +18,7 @@ import {
   Card,
   CardContent,
   IconButton,
+  CircularProgress,
 } from "@mui/material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CreateNewFolderIcon from "@mui/icons-material/CreateNewFolder";
@@ -55,6 +56,7 @@ export default function Dashboard() {
   const [title, setTitle] = useState<string>("");
   const [textContent, setTextContent] = useState<string>("");
   const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([
     { question: "", answer: "" },
   ]);
@@ -190,6 +192,9 @@ export default function Dashboard() {
       return;
     }
 
+    setUploadStatus(""); // Clear any previous status
+    setLoading(true); // Start the loading indicator
+
     let formData: FormData | null = null;
     let requestBody: any = null;
     let headers: HeadersInit = {};
@@ -211,6 +216,8 @@ export default function Dashboard() {
         headers: headers,
       });
 
+      setLoading(false); // Stop the loading indicator
+
       if (!response.ok) {
         const errorData = await response.json();
         setUploadStatus(`Error: ${errorData.error}`);
@@ -218,6 +225,14 @@ export default function Dashboard() {
       }
 
       const data = await response.json();
+
+      if (!data.questionsAndAnswers || data.questionsAndAnswers.length === 0) {
+        setUploadStatus(
+          "Error: No flashcards were generated. Please try again."
+        );
+        return;
+      }
+
       setUploadStatus("Content processed successfully!");
 
       await setDoc(doc(db, "flashcards", title), {
@@ -233,6 +248,7 @@ export default function Dashboard() {
         )}`
       );
     } catch (error) {
+      setLoading(false); // Stop the loading indicator
       setUploadStatus("Error processing content.");
       console.error("Upload Error:", error);
     }
@@ -718,6 +734,11 @@ export default function Dashboard() {
                 </Typography>
               )}
             </Box>
+            {loading && (
+              <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+                <CircularProgress sx={{ color: theme.palette.primary.main }} />
+              </Box>
+            )}
           </DialogContent>
           <DialogActions
             sx={{
