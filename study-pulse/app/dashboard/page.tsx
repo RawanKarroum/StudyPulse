@@ -362,7 +362,7 @@ export default function Dashboard() {
             <AutoAwesomeIcon sx={{ fontSize: 60, marginBottom: 2 }} />
             <Typography variant="h5">Generate Flashcards</Typography>
             <Typography variant="body2" sx={{ marginTop: 2 }}>
-              Automatically create flashcards from your notes.
+              Automatically create flashcards from notes.
             </Typography>
           </Box>
 
