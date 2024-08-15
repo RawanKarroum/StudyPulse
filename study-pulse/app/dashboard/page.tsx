@@ -17,12 +17,14 @@ import {
   Grid,
   Card,
   CardContent,
-  useMediaQuery,
+  IconButton,
 } from "@mui/material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CreateNewFolderIcon from "@mui/icons-material/CreateNewFolder";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import { Upload } from "@mui/icons-material";
 import { createTheme } from "@mui/material/styles";
-import React, { useEffect, useState, FormEvent, ChangeEvent } from "react";
+import React, { useEffect, useState, ChangeEvent, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   setDoc,
@@ -35,15 +37,27 @@ import {
 import { db } from "../config/firebase";
 import { useUserData } from "../hooks/useUserData";
 
+interface FlashcardSet {
+  title: string;
+  terms: number;
+}
+
+interface Flashcard {
+  question: string;
+  answer: string;
+}
+
 export default function Dashboard() {
   const { userData, isSignedIn } = useUserData();
-  const [flashcardSets, setFlashcardSets] = useState<
-    { title: string; terms: number }[]
-  >([]);
-  const [open, setOpen] = useState(false);
+  const [flashcardSets, setFlashcardSets] = useState<FlashcardSet[]>([]);
+  const [openGenerate, setOpenGenerate] = useState(false);
+  const [openCreate, setOpenCreate] = useState(false);
   const [title, setTitle] = useState<string>("");
   const [textContent, setTextContent] = useState<string>("");
   const [file, setFile] = useState<File | null>(null);
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([
+    { question: "", answer: "" },
+  ]);
   const [uploadStatus, setUploadStatus] = useState<string>("");
   const router = useRouter();
 
@@ -79,7 +93,7 @@ export default function Dashboard() {
     router.push(`/flashcard-page/${encodeURIComponent(title)}`);
   };
 
-  const handleClickOpen = () => {
+  const handleClickOpenGenerate = () => {
     if (
       userData?.membership === "free" &&
       flashcardSets.length >= maxFreeFlashcards
@@ -88,30 +102,82 @@ export default function Dashboard() {
         `Upgrade to create more than ${maxFreeFlashcards} flashcard sets.`
       );
     } else {
-      setOpen(true);
+      setOpenGenerate(true);
     }
   };
 
-  const handleClose = () => {
-    setOpen(false);
+  const handleClickOpenCreate = () => {
+    if (
+      userData?.membership === "free" &&
+      flashcardSets.length >= maxFreeFlashcards
+    ) {
+      setUploadStatus(
+        `Upgrade to create more than ${maxFreeFlashcards} flashcard sets.`
+      );
+    } else {
+      setOpenCreate(true);
+    }
   };
 
-  const handleTextChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
-    setTextContent(event.target.value);
-    setFile(null);
+  const handleCloseGenerate = () => {
+    setOpenGenerate(false);
+    setUploadStatus("");
   };
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const uploadedFile = event.target.files ? event.target.files[0] : null;
-    setFile(uploadedFile);
-    setTextContent("");
+  const handleCloseCreate = () => {
+    setOpenCreate(false);
+    setTitle("");
+    setFlashcards([{ question: "", answer: "" }]);
+    setUploadStatus("");
   };
 
   const handleTitleChange = (event: ChangeEvent<HTMLInputElement>) => {
     setTitle(event.target.value);
   };
 
-  const handleSubmit = async (event: FormEvent) => {
+  const handleFlashcardChange = (
+    index: number,
+    event: ChangeEvent<HTMLInputElement>,
+    field: "question" | "answer"
+  ) => {
+    const newFlashcards = [...flashcards];
+    newFlashcards[index][field] = event.target.value;
+    setFlashcards(newFlashcards);
+  };
+
+  const addFlashcard = () => {
+    setFlashcards([...flashcards, { question: "", answer: "" }]);
+  };
+
+  const handleSubmitCreate = async () => {
+    if (!title.trim()) {
+      setUploadStatus("Please enter a title for your flashcard set.");
+      return;
+    }
+
+    if (flashcards.some((fc) => !fc.question.trim() || !fc.answer.trim())) {
+      setUploadStatus("Please complete all flashcards before submitting.");
+      return;
+    }
+
+    try {
+      await setDoc(doc(db, "flashcards", title), {
+        flashcards: flashcards,
+        userId: userData?.id,
+      });
+
+      setUploadStatus("Flashcard set created successfully!");
+      handleCloseCreate();
+
+      // Use a full page reload as a fallback
+      window.location.reload();
+    } catch (error) {
+      setUploadStatus("Error creating flashcard set.");
+      console.error("Upload Error:", error);
+    }
+  };
+
+  const handleSubmitGenerate = async (event: FormEvent) => {
     event.preventDefault();
 
     if (!title.trim()) {
@@ -275,7 +341,7 @@ export default function Dashboard() {
                 backgroundColor: "#5117e0",
               },
             }}
-            onClick={handleClickOpen}
+            onClick={handleClickOpenGenerate}
           >
             <AutoAwesomeIcon sx={{ fontSize: 60, marginBottom: 2 }} />
             <Typography variant="h5">Generate Flashcards</Typography>
@@ -302,7 +368,7 @@ export default function Dashboard() {
                 backgroundColor: "#5117e0",
               },
             }}
-            onClick={handleClickOpen}
+            onClick={handleClickOpenCreate}
           >
             <CreateNewFolderIcon sx={{ fontSize: 60, marginBottom: 2 }} />
             <Typography variant="h5">Create Flashcards</Typography>
@@ -325,7 +391,7 @@ export default function Dashboard() {
               {flashcardSets.length}/{maxFreeFlashcards} Flashcard Sets Created
             </Typography>
           ) : (
-            <Typography variant="h6">Unlimited Flashcard Sets</Typography>
+            ""
           )}
         </Box>
 
@@ -389,43 +455,302 @@ export default function Dashboard() {
           )}
         </Box>
 
-        <Dialog open={open} onClose={handleClose}>
-          <DialogTitle>Create Flashcard Set</DialogTitle>
-          <DialogContent>
+        {/* Modal for Creating Flashcards */}
+        <Dialog
+          open={openCreate}
+          onClose={handleCloseCreate}
+          fullWidth
+          maxWidth="md"
+        >
+          <DialogTitle
+            sx={{
+              backgroundColor: theme.palette.primary.main,
+              color: "#fff",
+              textAlign: "center",
+              fontWeight: 700,
+              padding: 2,
+            }}
+          >
+            Create Flashcard Set
+          </DialogTitle>
+          <DialogContent
+            sx={{
+              backgroundColor: theme.palette.background.default,
+              padding: 3,
+            }}
+          >
             <TextField
               autoFocus
               margin="dense"
               label="Flashcard Set Title"
               fullWidth
-              variant="standard"
+              variant="outlined"
               value={title}
               onChange={handleTitleChange}
+              sx={{
+                marginBottom: 3,
+                "& .MuiInputLabel-root": {
+                  color: theme.palette.secondary.main, // Dark purple label color
+                },
+                "& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline": {
+                  borderColor: theme.palette.secondary.main,
+                },
+                "& .MuiInputBase-input": {
+                  color: theme.palette.secondary.main, // Dark purple text color
+                },
+                "& .MuiInputBase-input::placeholder": {
+                  color: theme.palette.secondary.main, // Dark purple placeholder text
+                  opacity: 1,
+                },
+              }}
+              placeholder="Enter the title of your flashcard set"
+            />
+            {flashcards.map((flashcard, index) => (
+              <Box
+                key={index}
+                sx={{
+                  padding: 2,
+                  marginBottom: 2,
+                  border: `1px solid ${theme.palette.secondary.main}`, // Dark purple border
+                  borderRadius: 4,
+                }}
+              >
+                <TextField
+                  label={`Question ${index + 1}`}
+                  fullWidth
+                  variant="outlined"
+                  value={flashcard.question}
+                  onChange={(e: any) =>
+                    handleFlashcardChange(index, e, "question")
+                  }
+                  sx={{
+                    marginBottom: 2,
+                    "& .MuiInputLabel-root": {
+                      color: theme.palette.secondary.main, // Dark purple label color for the question
+                    },
+                    "& .MuiInputBase-input": {
+                      color: theme.palette.secondary.main, // Dark purple text color
+                    },
+                    "& .MuiInputBase-input::placeholder": {
+                      color: theme.palette.secondary.main, // Dark purple placeholder text
+                      opacity: 1,
+                    },
+                  }}
+                  placeholder="Enter the question"
+                />
+                <TextField
+                  label={`Answer ${index + 1}`}
+                  fullWidth
+                  variant="outlined"
+                  value={flashcard.answer}
+                  onChange={(e: any) =>
+                    handleFlashcardChange(index, e, "answer")
+                  }
+                  sx={{
+                    "& .MuiInputLabel-root": {
+                      color: theme.palette.secondary.main, // Dark purple label color for the answer
+                    },
+                    "& .MuiInputBase-input": {
+                      color: theme.palette.secondary.main, // Dark purple text color
+                    },
+                    "& .MuiInputBase-input::placeholder": {
+                      color: theme.palette.secondary.main, // Dark purple placeholder text
+                      opacity: 1,
+                    },
+                  }}
+                  placeholder="Enter the answer"
+                />
+              </Box>
+            ))}
+            <Box
+              sx={{ display: "flex", justifyContent: "center", marginTop: 2 }}
+            >
+              <IconButton
+                color="primary"
+                onClick={addFlashcard}
+                sx={{
+                  backgroundColor: theme.palette.primary.main,
+                  color: "#fff",
+                  "&:hover": {
+                    backgroundColor: "#5117e0",
+                  },
+                }}
+              >
+                <AddCircleOutlineIcon sx={{ fontSize: 40 }} />
+              </IconButton>
+            </Box>
+          </DialogContent>
+          <DialogActions
+            sx={{
+              backgroundColor: theme.palette.background.default,
+              padding: 2,
+              justifyContent: "center",
+            }}
+          >
+            <Button
+              onClick={handleCloseCreate}
+              color="secondary"
+              sx={{ marginRight: 2 }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                await handleSubmitCreate();
+                router.refresh(); // Refresh the page after submission
+              }}
+              color="primary"
+              variant="contained"
+              disabled={
+                userData?.membership === "free" &&
+                flashcardSets.length >= maxFreeFlashcards
+              }
+              sx={{
+                backgroundColor: theme.palette.primary.main,
+                color: "#fff",
+                padding: "10px 20px",
+                borderRadius: "30px",
+                boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.2)",
+                "&:hover": {
+                  backgroundColor: "#5117e0",
+                },
+              }}
+            >
+              Create Flashcard Set
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Modal for Generating Flashcards */}
+        <Dialog
+          open={openGenerate}
+          onClose={handleCloseGenerate}
+          fullWidth
+          maxWidth="md"
+        >
+          <DialogTitle
+            sx={{
+              backgroundColor: theme.palette.primary.main,
+              color: "#fff",
+              textAlign: "center",
+              fontWeight: 700,
+              padding: 2,
+            }}
+          >
+            Generate Flashcard Set
+          </DialogTitle>
+          <DialogContent
+            sx={{
+              backgroundColor: theme.palette.background.default,
+              padding: 3,
+            }}
+          >
+            <TextField
+              autoFocus
+              margin="dense"
+              label="Flashcard Set Title"
+              fullWidth
+              variant="outlined"
+              value={title}
+              onChange={handleTitleChange}
+              sx={{
+                marginBottom: 3,
+                "& .MuiInputLabel-root": {
+                  color: theme.palette.secondary.main,
+                },
+                "& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline": {
+                  borderColor: theme.palette.secondary.main,
+                },
+              }}
             />
             <TextareaAutosize
               minRows={6}
               placeholder="Paste your notes here..."
               value={textContent}
-              onChange={handleTextChange}
-              style={{ width: "100%", marginTop: "16px" }}
+              onChange={(e) => setTextContent(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "10px",
+                marginTop: "16px",
+                borderRadius: "4px",
+                borderColor: theme.palette.secondary.main,
+                fontFamily:
+                  '"Poppins", "Roboto", "Helvetica", "Arial", sans-serif',
+                fontSize: "1rem",
+              }}
             />
-            <input
-              type="file"
-              accept=".txt,.pdf"
-              onChange={handleFileChange}
-              style={{ marginTop: "16px", width: "100%" }}
-            />
+            <Box sx={{ marginTop: 3, display: "flex", alignItems: "center" }}>
+              <Button
+                variant="contained"
+                component="label"
+                startIcon={<Upload />}
+                sx={{
+                  backgroundColor: theme.palette.primary.main,
+                  color: "#fff",
+                  padding: "10px 20px",
+                  borderRadius: "30px",
+                  boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.2)",
+                  "&:hover": {
+                    backgroundColor: "#5117e0",
+                  },
+                }}
+              >
+                Upload File
+                <input
+                  type="file"
+                  accept=".txt,.pdf"
+                  hidden
+                  onChange={(e) =>
+                    setFile(e.target.files ? e.target.files[0] : null)
+                  }
+                />
+              </Button>
+              {file && (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    marginLeft: 2,
+                    color: theme.palette.secondary.main,
+                    fontWeight: 500,
+                  }}
+                >
+                  {file.name}
+                </Typography>
+              )}
+            </Box>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose} color="secondary">
+          <DialogActions
+            sx={{
+              backgroundColor: theme.palette.background.default,
+              padding: 2,
+              justifyContent: "center",
+            }}
+          >
+            <Button
+              onClick={handleCloseGenerate}
+              color="secondary"
+              sx={{ marginRight: 2 }}
+            >
               Cancel
             </Button>
             <Button
-              onClick={handleSubmit}
+              onClick={handleSubmitGenerate}
               color="primary"
+              variant="contained"
               disabled={
                 userData?.membership === "free" &&
                 flashcardSets.length >= maxFreeFlashcards
               }
+              sx={{
+                backgroundColor: theme.palette.primary.main,
+                color: "#fff",
+                padding: "10px 20px",
+                borderRadius: "30px",
+                boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.2)",
+                "&:hover": {
+                  backgroundColor: "#5117e0",
+                },
+              }}
             >
               Generate Flashcards
             </Button>

@@ -8,10 +8,36 @@ import {
   CssBaseline,
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/config/firebase'; // Adjust the path to your Firebase config
+import { useUserData } from '../hooks/useUserData'; // Assuming you have a hook to get user data
 
 export default function Success() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { userData } = useUserData();
+
+  useEffect(() => {
+    const updateMembership = async () => {
+      const sessionId = searchParams.get('session_id');
+      if (sessionId && userData?.id) {
+        try {
+          // Update user's membership in Firestore
+          const userRef = doc(db, 'users', userData.id);
+          await updateDoc(userRef, { membership: 'member' });
+
+          // Redirect to dashboard or show success message
+          router.push('/dashboard');
+        } catch (error) {
+          console.error('Error updating membership:', error);
+        }
+      }
+    };
+
+    updateMembership();
+  }, [searchParams, userData, router]);
 
   const handleContinue = () => {
     router.push('/dashboard');

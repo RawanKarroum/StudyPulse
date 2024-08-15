@@ -15,7 +15,8 @@ import {
 } from "@mui/material";
 import { createTheme } from "@mui/material/styles";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useUserData } from "../hooks/useUserData"; // Adjust the import according to your file structure
 
 interface FlashcardSet {
   title: string;
@@ -28,6 +29,13 @@ interface FlashcardSet {
 export default function PublicCards({ flashcardSets }: { flashcardSets: FlashcardSet[] }) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const { userData, isSignedIn } = useUserData(); // Use userData to check membership level
+
+  useEffect(() => {
+    if (userData?.membership === "free") {
+      router.push("/dashboard"); // Redirect to dashboard if membership is "free"
+    }
+  }, [userData, router]);
 
   const handleCardClick = (title: string) => {
     router.push(`/flashcard-page/${encodeURIComponent(title)}`);
@@ -86,6 +94,10 @@ export default function PublicCards({ flashcardSets }: { flashcardSets: Flashcar
       },
     },
   });
+
+  if (!isSignedIn) {
+    return <p>Please sign in to access the public flashcards.</p>;
+  }
 
   return (
     <ThemeProvider theme={theme}>
