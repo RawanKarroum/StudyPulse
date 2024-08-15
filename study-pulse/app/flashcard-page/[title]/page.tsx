@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from '../../config/firebase';
 import { Box, Card, CardContent, Typography, IconButton, ThemeProvider, CssBaseline, LinearProgress } from '@mui/material';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material'; 
@@ -10,7 +10,7 @@ import TimerModal from '../../components/TimerModal/page';
 import Navbar from '../../components/RightNavbar/page';
 import CountdownTimer from '../../components/CountdownTimer/page';
 import { createTheme } from '@mui/material/styles';
-import LeftNavbar from '../../components/AddButton/page'; 
+import AddButton from '../../components/AddButton/page';
 
 const FlashcardPage: React.FC = () => {
     const [questionsAndAnswers, setQuestionsAndAnswers] = useState<{ question: string, answer: string }[]>([]);
@@ -107,6 +107,24 @@ const FlashcardPage: React.FC = () => {
         setTimerModalOpen(false);
     };
 
+    // Handle adding new flashcard
+    const handleAddQuestion = async (question: string, answer: string) => {
+        const newFlashcard = { question, answer };
+        const updatedFlashcards = [...questionsAndAnswers, newFlashcard];
+
+        setQuestionsAndAnswers(updatedFlashcards);
+
+        try {
+            const docRef = doc(db, "flashcards", decodeURIComponent(title as string));
+            await updateDoc(docRef, {
+                flashcards: arrayUnion(newFlashcard)
+            });
+            console.log("New flashcard added to Firebase");
+        } catch (error) {
+            console.error("Error updating flashcards:", error);
+        }
+    };
+
     if (!questionsAndAnswers.length) {
         return <Typography variant="h6">No flashcards found.</Typography>;
     }
@@ -155,7 +173,7 @@ const FlashcardPage: React.FC = () => {
         <ThemeProvider theme={theme}>
             <CssBaseline />
             <Box sx={{ display: 'flex', height: '100vh', position: 'relative' }}>
-                <LeftNavbar />
+                <AddButton title={decodedTitle} onAdd={handleAddQuestion} />
                 <Box
                     display="flex"
                     justifyContent="center"
