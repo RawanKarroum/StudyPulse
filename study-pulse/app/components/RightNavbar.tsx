@@ -9,7 +9,7 @@ interface NavbarProps {
     handleRandomizeToggle: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ handleTimerToggle, timerOn, handleRandomizeToggle }) => {
+const RightNavbar: React.FC<NavbarProps> = ({ handleTimerToggle, timerOn, handleRandomizeToggle }) => {
     return (
         <Box
             sx={{
@@ -90,4 +90,4 @@ const Navbar: React.FC<NavbarProps> = ({ handleTimerToggle, timerOn, handleRando
     );
 };
 
-export default Navbar;
+export default RightNavbar;

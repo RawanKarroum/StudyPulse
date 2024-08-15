@@ -6,11 +6,11 @@ import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from '../../config/firebase';
 import { Box, Card, CardContent, Typography, IconButton, ThemeProvider, CssBaseline, LinearProgress } from '@mui/material';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material'; 
-import TimerModal from '../../components/TimerModal/page';
-import Navbar from '../../components/RightNavbar/page';
-import CountdownTimer from '../../components/CountdownTimer/page';
+import TimerModal from '../../components/TimerModal';
+import RightNavbar from '../../components/RightNavbar';
+import CountdownTimer from '../../components/CountdownTimer';
 import { createTheme } from '@mui/material/styles';
-import AddButton from '../../components/AddButton/page';
+import AddButton from '../../components/AddButton';
 
 const FlashcardPage: React.FC = () => {
     const [questionsAndAnswers, setQuestionsAndAnswers] = useState<{ question: string, answer: string }[]>([]);
@@ -278,7 +278,7 @@ const FlashcardPage: React.FC = () => {
                         />
                     </Box>
 
-                    <Navbar 
+                    <RightNavbar 
                         handleTimerToggle={handleToggleTimer} 
                         timerOn={timerOn} 
                         handleRandomizeToggle={handleRandomizeToggle} 
