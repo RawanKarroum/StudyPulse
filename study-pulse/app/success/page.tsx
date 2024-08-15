@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import {
   Box,
   Button,
@@ -14,13 +14,13 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { useUserData } from '../hooks/useUserData';
 
-export default function Success() {
+function SuccessComponent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { userData } = useUserData();
 
   useEffect(() => {
-    if (typeof window !== 'undefined') { // Ensure this runs only in the browser
+    if (typeof window !== 'undefined') {
       const updateMembership = async () => {
         const sessionId = searchParams.get('session_id');
         if (sessionId && userData?.id) {
@@ -135,5 +135,13 @@ export default function Success() {
         </Container>
       </Box>
     </ThemeProvider>
+  );
+}
+
+export default function Success() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SuccessComponent />
+    </Suspense>
   );
 }
