@@ -7,14 +7,145 @@ import {
   Typography,
   Box,
   Chip,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
+  TextareaAutosize,
+  Grid,
+  Card,
+  CardContent,
+  useMediaQuery,
 } from "@mui/material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CreateNewFolderIcon from "@mui/icons-material/CreateNewFolder";
 import { createTheme } from "@mui/material/styles";
+import React, { useEffect, useState, FormEvent, ChangeEvent } from "react";
+import { useRouter } from "next/navigation";
+import { setDoc, doc, collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "../config/firebase";
 import { useUserData } from "../hooks/useUserData";
 
 export default function Dashboard() {
   const { userData, isSignedIn } = useUserData();
+  const [flashcardSets, setFlashcardSets] = useState<{ title: string; terms: number }[]>([]);
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState<string>("");
+  const [textContent, setTextContent] = useState<string>("");
+  const [file, setFile] = useState<File | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<string>("");
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchFlashcardSets = async () => {
+      try {
+        if (userData?.id) {
+          const q = query(collection(db, "flashcards"), where("userId", "==", userData.id));
+          const querySnapshot = await getDocs(q);
+          const flashcards = querySnapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+              title: doc.id,
+              terms: data.flashcards?.length || 0, // Get the length of the flashcards array
+            };
+          });
+          setFlashcardSets(flashcards);
+        }
+      } catch (error) {
+        console.error("Error fetching flashcard sets: ", error);
+      }
+    };
+
+    fetchFlashcardSets();
+  }, [userData]);
+
+  const handleCardClick = (title: string) => {
+    router.push(`/flashcard-page/${encodeURIComponent(title)}`);
+  };
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const handleTextChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    setTextContent(event.target.value);
+    setFile(null);
+  };
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const uploadedFile = event.target.files ? event.target.files[0] : null;
+    setFile(uploadedFile);
+    setTextContent("");
+  };
+
+  const handleTitleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setTitle(event.target.value);
+  };
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+
+    if (!title.trim()) {
+      setUploadStatus("Please enter a title for your flashcard set.");
+      return;
+    }
+
+    if (!textContent.trim() && !file) {
+      setUploadStatus("Please enter text content or upload a file.");
+      return;
+    }
+
+    let formData: FormData | null = null;
+    let requestBody: any = null;
+    let headers: HeadersInit = {};
+
+    if (file) {
+      formData = new FormData();
+      formData.append("file", file);
+    } else if (textContent.trim()) {
+      headers = {
+        "Content-Type": "application/json",
+      };
+      requestBody = JSON.stringify({ textContent });
+    }
+
+    try {
+      const response = await fetch("/api/generate-qa", {
+        method: "POST",
+        body: formData || requestBody,
+        headers: headers,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setUploadStatus(`Error: ${errorData.error}`);
+        return;
+      }
+
+      const data = await response.json();
+      setUploadStatus("Content processed successfully!");
+
+      await setDoc(doc(db, "flashcards", title), {
+        flashcards: data.questionsAndAnswers,
+        userId: userData?.id, // Store the user ID in the document
+      });
+
+      router.push(
+        `/flashcard-page/${encodeURIComponent(title)}?aiResponse=${encodeURIComponent(
+          JSON.stringify(data.questionsAndAnswers)
+        )}`
+      );
+    } catch (error) {
+      setUploadStatus("Error processing content.");
+      console.error("Upload Error:", error);
+    }
+  };
 
   const theme = createTheme({
     palette: {
@@ -60,7 +191,6 @@ export default function Dashboard() {
     return <p>Please sign in to access the dashboard.</p>;
   }
 
-  console.log("User ID:", userData?.id);
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -116,6 +246,7 @@ export default function Dashboard() {
                 backgroundColor: "#5117e0", // Slightly darker shade for hover
               },
             }}
+            onClick={handleClickOpen} // Open dialog on click
           >
             <AutoAwesomeIcon sx={{ fontSize: 60, marginBottom: 2 }} /> {/* Increased icon size */}
             <Typography variant="h5">Generate Flashcards</Typography>
@@ -180,97 +311,78 @@ export default function Dashboard() {
               justifyContent: "center", // Align cards in the center
             }}
           >
-            {/* Example Flashcard Set */}
-            <Box
-              sx={{
-                width: 260, // Increased width
-                height: 160, // Increased height
-                backgroundColor: theme.palette.primary.main,
-                color: "#fff",
-                padding: 2,
-                boxShadow: "0px 6px 20px rgba(0, 0, 0, 0.3)",
-                borderRadius: 4, // Rounded corners
-                cursor: "pointer", // Make cursor a pointer
-                "&:hover": {
-                  backgroundColor: "#5117e0",
-                },
-                textAlign: "center",
-              }}
-            >
-              <Typography variant="h6" component="div" sx={{ color: "#fff" }}>
-                CEN800 Midterm
-              </Typography>
-              <Chip
-                label="222 terms"
+            {flashcardSets.map((flashcard, index) => (
+              <Box
+                key={index}
                 sx={{
-                  marginTop: 1,
-                  backgroundColor: "#fff", // White background for the Chip
-                  color: theme.palette.secondary.main, // Dark purple text for the Chip
+                  width: 260, // Increased width
+                  height: 160, // Increased height
+                  backgroundColor: theme.palette.primary.main,
+                  color: "#fff",
+                  padding: 2,
+                  boxShadow: "0px 6px 20px rgba(0, 0, 0, 0.3)",
+                  borderRadius: 4, // Rounded corners
+                  cursor: "pointer", // Make cursor a pointer
+                  "&:hover": {
+                    backgroundColor: "#5117e0",
+                  },
+                  textAlign: "center",
                 }}
-              />
-            </Box>
-
-            {/* Additional flashcard examples */}
-            <Box
-              sx={{
-                width: 260, // Increased width
-                height: 160, // Increased height
-                backgroundColor: theme.palette.primary.main,
-                color: "#fff",
-                padding: 2,
-                boxShadow: "0px 6px 20px rgba(0, 0, 0, 0.3)",
-                borderRadius: 4, // Rounded corners
-                cursor: "pointer", // Make cursor a pointer
-                "&:hover": {
-                  backgroundColor: "#5117e0",
-                },
-                textAlign: "center",
-              }}
-            >
-              <Typography variant="h6" component="div" sx={{ color: "#fff" }}>
-                BIO101 Final Review
-              </Typography>
-              <Chip
-                label="150 terms"
-                sx={{
-                  marginTop: 1,
-                  backgroundColor: "#fff", // White background for the Chip
-                  color: theme.palette.secondary.main, // Dark purple text for the Chip
-                }}
-              />
-            </Box>
-
-            <Box
-              sx={{
-                width: 260, // Increased width
-                height: 160, // Increased height
-                backgroundColor: theme.palette.primary.main,
-                color: "#fff",
-                padding: 2,
-                boxShadow: "0px 6px 20px rgba(0, 0, 0, 0.3)",
-                borderRadius: 4, // Rounded corners
-                cursor: "pointer", // Make cursor a pointer
-                "&:hover": {
-                  backgroundColor: "#5117e0",
-                },
-                textAlign: "center",
-              }}
-            >
-              <Typography variant="h6" component="div" sx={{ color: "#fff" }}>
-                Physics 101
-              </Typography>
-              <Chip
-                label="80 terms"
-                sx={{
-                  marginTop: 1,
-                  backgroundColor: "#fff", // White background for the Chip
-                  color: theme.palette.secondary.main, // Dark purple text for the Chip
-                }}
-              />
-            </Box>
-            
+                onClick={() => handleCardClick(flashcard.title)}
+              >
+                <Typography variant="h6" component="div" sx={{ color: "#fff" }}>
+                  {flashcard.title}
+                </Typography>
+                <Chip
+                  label={`${flashcard.terms} terms`}
+                  sx={{
+                    marginTop: 1,
+                    backgroundColor: "#fff", // White background for the Chip
+                    color: theme.palette.secondary.main, // Dark purple text for the Chip
+                  }}
+                />
+              </Box>
+            ))}
           </Box>
         </Box>
+
+        <Dialog open={open} onClose={handleClose}>
+          <DialogTitle>Create Flashcard Set</DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              margin="dense"
+              label="Flashcard Set Title"
+              fullWidth
+              variant="standard"
+              value={title}
+              onChange={handleTitleChange}
+            />
+            <TextareaAutosize
+              minRows={6}
+              placeholder="Paste your notes here..."
+              value={textContent}
+              onChange={handleTextChange}
+              style={{ width: "100%", marginTop: "16px" }}
+            />
+            <input
+              type="file"
+              accept=".txt,.pdf"
+              onChange={handleFileChange}
+              style={{ marginTop: "16px", width: "100%" }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose} color="secondary">
+              Cancel
+            </Button>
+            <Button onClick={handleSubmit} color="primary">
+              Generate Flashcards
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <p>{uploadStatus}</p>
       </Container>
     </ThemeProvider>
   );
