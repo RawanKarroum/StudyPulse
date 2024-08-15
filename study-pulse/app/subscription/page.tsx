@@ -8,7 +8,7 @@ import {
   CssBaseline,
 } from "@mui/material";
 import { useState } from "react";
-import { loadStripe } from "@stripe/stripe-js";
+import { loadStripe } from '@stripe/stripe-js';
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
