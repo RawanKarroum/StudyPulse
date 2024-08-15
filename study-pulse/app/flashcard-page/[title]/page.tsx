@@ -10,7 +10,7 @@ import TimerModal from '../../components/TimerModal/page';
 import Navbar from '../../components/RightNavbar/page';
 import CountdownTimer from '../../components/CountdownTimer/page';
 import { createTheme } from '@mui/material/styles';
-import LeftNavbar from '../../components/LeftNavbar/page'; // Import the LeftNavbar
+import LeftNavbar from '../../components/LeftNavbar/page'; 
 
 const FlashcardPage: React.FC = () => {
     const [questionsAndAnswers, setQuestionsAndAnswers] = useState<{ question: string, answer: string }[]>([]);
@@ -23,23 +23,44 @@ const FlashcardPage: React.FC = () => {
     const { title } = useParams();
     const router = useRouter();
 
-    useEffect(() => {
-        const fetchFlashcards = async () => {
-            try {
-                const docRef = doc(db, "flashcards", decodeURIComponent(title as string));
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    setQuestionsAndAnswers(docSnap.data().flashcards);
-                } else {
-                    console.log("No such document!");
-                }
-            } catch (error) {
-                console.error("Error fetching flashcards:", error);
-            }
-        };
+    // Shuffle function
+    const shuffleArray = (array: { question: string, answer: string }[]) => {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    };
 
+    // Fetch flashcards
+    const fetchFlashcards = async () => {
+        try {
+            const docRef = doc(db, "flashcards", decodeURIComponent(title as string));
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                setQuestionsAndAnswers(docSnap.data().flashcards);
+            } else {
+                console.log("No such document!");
+            }
+        } catch (error) {
+            console.error("Error fetching flashcards:", error);
+        }
+    };
+
+    useEffect(() => {
         fetchFlashcards();
     }, [title]);
+
+    // Handle randomize toggle
+    const handleRandomizeToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.checked) {
+            const shuffledFlashcards = [...questionsAndAnswers];
+            shuffleArray(shuffledFlashcards);
+            setQuestionsAndAnswers(shuffledFlashcards);
+            setCurrentCardIndex(0);
+        } else {
+            fetchFlashcards(); // Reset to original order if needed
+        }
+    };
 
     const handleNext = () => {
         setIsFlipped(false);
@@ -134,7 +155,7 @@ const FlashcardPage: React.FC = () => {
         <ThemeProvider theme={theme}>
             <CssBaseline />
             <Box sx={{ display: 'flex', height: '100vh', position: 'relative' }}>
-                <LeftNavbar /> {/* Add the LeftNavbar here */}
+                <LeftNavbar />
                 <Box
                     display="flex"
                     justifyContent="center"
@@ -237,7 +258,11 @@ const FlashcardPage: React.FC = () => {
                         />
                     </Box>
 
-                    <Navbar handleTimerToggle={handleToggleTimer} timerOn={timerOn} />
+                    <Navbar 
+                        handleTimerToggle={handleToggleTimer} 
+                        timerOn={timerOn} 
+                        handleRandomizeToggle={handleRandomizeToggle} 
+                    />
 
                     <TimerModal
                         open={timerModalOpen}
