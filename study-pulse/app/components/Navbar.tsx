@@ -2,34 +2,26 @@
 
 import { AppBar, Toolbar, Tabs, Tab, Box, Button } from "@mui/material";
 import { UserButton } from "@clerk/nextjs";
-import { useState } from "react";
+import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
-  const [value, setValue] = useState(0);
+  const router = useRouter(); // Initialize the router
 
-  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
-    setValue(newValue);
+  const handleDashboardClick = () => {
+    router.push('/dashboard');
+  };
+
+  const handleBrowseClick = () => {
+    router.push('/public-flash-cards');
   };
 
   return (
     <AppBar position="static" sx={{ backgroundColor: '#651fff' }}>
       <Toolbar>
         <Tabs
-          value={value}
-          onChange={handleChange}
-          textColor="inherit"
-          indicatorColor="primary"
-          sx={{
-            '& .MuiTabs-indicator': {
-              backgroundColor: 'white', // Change the underline to white
-            },
-            '& .Mui-selected': {
-              color: 'white', // Ensure selected tab text is white
-            },
-          }}
         >
-          <Tab label="Dashboard" sx={{ color: 'white', fontWeight: 'bold' }} />
-          <Tab label="Browse Sets" sx={{ color: 'white', fontWeight: 'bold' }} />
+          <Tab label="Dashboard" onClick={handleDashboardClick} sx={{ color: 'white',  }}/>
+          <Tab label="Browse Sets" onClick={handleBrowseClick} sx={{ color: 'white', }}/>
         </Tabs>
         <Box sx={{ flexGrow: 1 }} />
         <Button

@@ -177,10 +177,15 @@ export default function Dashboard() {
     components: {
       MuiCssBaseline: {
         styleOverrides: {
+          html: {
+            height: "100%",
+            overflow: "hidden", // Prevent scrolling on the entire page
+          },
           body: {
-            background: "linear-gradient(135deg, #4615b2 0%, #651fff 100%)", // Gradient background
+            height: "100%",
+            background: "linear-gradient(135deg, #4615b2 0%, #651fff 100%)",
             color: "#FFFFFF",
-            overflow: "hidden", // Prevent the entire page from scrolling
+            overflow: "hidden", // Prevent scrolling on the entire page
           },
         },
       },
@@ -205,6 +210,7 @@ export default function Dashboard() {
           backgroundColor: theme.palette.background.default,
           color: theme.palette.secondary.main, // Use dark purple for text color
           padding: 4,
+          overflow: "hidden", // Prevent scrolling inside the container
         }}
       >
         {/* Title and Description */}
