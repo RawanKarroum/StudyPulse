@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 
 interface CountdownTimerProps {
     countdown: number;
@@ -8,6 +8,7 @@ interface CountdownTimerProps {
 
 const CountdownTimer: React.FC<CountdownTimerProps> = ({ countdown, onTimerEnd }) => {
     const [timeLeft, setTimeLeft] = useState(countdown);
+    const [isPaused, setIsPaused] = useState(false);
 
     useEffect(() => {
         if (timeLeft <= 0) {
@@ -15,17 +16,27 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({ countdown, onTimerEnd }
             return;
         }
 
-        const timer = setTimeout(() => {
-            setTimeLeft(timeLeft - 1);
-        }, 1000);
+        if (!isPaused) {
+            const timer = setTimeout(() => {
+                setTimeLeft(timeLeft - 1);
+            }, 1000);
 
-        return () => clearTimeout(timer);
-    }, [timeLeft, onTimerEnd]);
+            return () => clearTimeout(timer);
+        }
+    }, [timeLeft, isPaused, onTimerEnd]);
 
     const formatTime = (value: number) => value.toString().padStart(2, '0');
 
     const mins = Math.floor(timeLeft / 60);
     const secs = timeLeft % 60;
+
+    const handlePause = () => {
+        setIsPaused(true);
+    };
+
+    const handleStart = () => {
+        setIsPaused(false);
+    };
 
     return (
         <Box
@@ -33,14 +44,14 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({ countdown, onTimerEnd }
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                padding: '12px 20px',
-                backgroundColor: '#333',
+                padding: '16px 24px',
+                backgroundColor: '#651fff',
                 color: '#fff',
-                borderRadius: '8px',
-                boxShadow: '2px 2px 12px rgba(0, 0, 0, 0.1)',
+                borderRadius: '12px',
+                boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)',
                 zIndex: 1000,
                 position: 'fixed',
-                top: '20%',
+                top: '10%',
                 left: '20px',
             }}
         >
@@ -52,16 +63,18 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({ countdown, onTimerEnd }
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
+                    marginBottom: '16px',
                 }}
             >
                 <Box sx={{ textAlign: 'center', margin: '0 4px' }}>
                     <Typography
                         variant="h5"
                         sx={{
-                            background: 'linear-gradient(to bottom, #fdfdfd 50%, #edebeb 50%)',
-                            borderRadius: '5px',
-                            padding: '10px',
-                            width: '40px',
+                            background: 'linear-gradient(to bottom, #d1c4e9 50%, #b39ddb 50%)',
+                            borderRadius: '8px',
+                            padding: '12px',
+                            width: '50px',
+                            color: '#4615b2',
                         }}
                     >
                         {formatTime(mins)}
@@ -75,10 +88,11 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({ countdown, onTimerEnd }
                     <Typography
                         variant="h5"
                         sx={{
-                            background: 'linear-gradient(to bottom, #fdfdfd 50%, #edebeb 50%)',
-                            borderRadius: '5px',
-                            padding: '10px',
-                            width: '40px',
+                            background: 'linear-gradient(to bottom, #d1c4e9 50%, #b39ddb 50%)',
+                            borderRadius: '8px',
+                            padding: '12px',
+                            width: '50px',
+                            color: '#4615b2',
                         }}
                     >
                         {formatTime(secs)}
@@ -87,6 +101,21 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({ countdown, onTimerEnd }
                         secs
                     </Typography>
                 </Box>
+            </Box>
+            <Box sx={{ display: 'flex', gap: '12px' }}>
+                <Button
+                    variant="contained"
+                    sx={{
+                        backgroundColor: isPaused ? '#651fff' : '#4615b2',
+                        '&:hover': {
+                            backgroundColor: isPaused ? '#573cce' : '#3b129f',
+                        },
+                        color: '#fff',
+                    }}
+                    onClick={isPaused ? handleStart : handlePause}
+                >
+                    {isPaused ? 'Start' : 'Pause'}
+                </Button>
             </Box>
         </Box>
     );
