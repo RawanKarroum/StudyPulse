@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useEffect } from 'react';
 import {
   Box,
   Button,
@@ -9,10 +10,9 @@ import {
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/config/firebase'; // Adjust the path to your Firebase config
-import { useUserData } from '../hooks/useUserData'; // Assuming you have a hook to get user data
+import { db } from '@/config/firebase';
+import { useUserData } from '../hooks/useUserData';
 
 export default function Success() {
   const router = useRouter();
@@ -20,23 +20,22 @@ export default function Success() {
   const { userData } = useUserData();
 
   useEffect(() => {
-    const updateMembership = async () => {
-      const sessionId = searchParams.get('session_id');
-      if (sessionId && userData?.id) {
-        try {
-          // Update user's membership in Firestore
-          const userRef = doc(db, 'users', userData.id);
-          await updateDoc(userRef, { membership: 'member' });
-
-          // Redirect to dashboard or show success message
-          router.push('/dashboard');
-        } catch (error) {
-          console.error('Error updating membership:', error);
+    if (typeof window !== 'undefined') { // Ensure this runs only in the browser
+      const updateMembership = async () => {
+        const sessionId = searchParams.get('session_id');
+        if (sessionId && userData?.id) {
+          try {
+            const userRef = doc(db, 'users', userData.id);
+            await updateDoc(userRef, { membership: 'member' });
+            router.push('/dashboard');
+          } catch (error) {
+            console.error('Error updating membership:', error);
+          }
         }
-      }
-    };
+      };
 
-    updateMembership();
+      updateMembership();
+    }
   }, [searchParams, userData, router]);
 
   const handleContinue = () => {
@@ -46,7 +45,7 @@ export default function Success() {
   const theme = createTheme({
     palette: {
       primary: {
-        main: "#4615b2", // Purple color for the button
+        main: "#4615b2",
       },
       secondary: {
         main: "#651fff",
@@ -59,19 +58,19 @@ export default function Success() {
       fontFamily: '"Poppins", "Roboto", "Helvetica", "Arial", sans-serif',
       h1: {
         fontWeight: 700,
-        color: "#4caf50", // Green color for success
+        color: "#4caf50",
       },
       body1: {
         fontWeight: 500,
-        fontSize: "1.25rem", // Larger text size
+        fontSize: "1.25rem",
         color: "#333",
-        marginBottom: "20px", // Spacing between title and body text
+        marginBottom: "20px",
       },
       body2: {
         fontWeight: 400,
-        fontSize: "1.15rem", // Slightly larger text for details
+        fontSize: "1.15rem",
         color: "#555",
-        marginBottom: "40px", // Spacing between body text and button
+        marginBottom: "40px",
       },
     },
     components: {
@@ -79,11 +78,11 @@ export default function Success() {
         styleOverrides: {
           html: {
             height: "100%",
-            overflow: "hidden", // Prevent scrolling
+            overflow: "hidden",
           },
           body: {
             height: "100%",
-            overflow: "hidden", // Prevent scrolling
+            overflow: "hidden",
             margin: 0,
           },
         },
