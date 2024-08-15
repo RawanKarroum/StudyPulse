@@ -23,7 +23,6 @@ const FlashcardPage: React.FC = () => {
     const { title } = useParams();
     const router = useRouter();
 
-    // Shuffle function
     const shuffleArray = (array: { question: string, answer: string }[]) => {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -31,7 +30,6 @@ const FlashcardPage: React.FC = () => {
         }
     };
 
-    // Fetch flashcards
     const fetchFlashcards = async () => {
         try {
             const docRef = doc(db, "flashcards", decodeURIComponent(title as string));
@@ -50,7 +48,6 @@ const FlashcardPage: React.FC = () => {
         fetchFlashcards();
     }, [title]);
 
-    // Handle randomize toggle
     const handleRandomizeToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.checked) {
             const shuffledFlashcards = [...questionsAndAnswers];
@@ -58,7 +55,7 @@ const FlashcardPage: React.FC = () => {
             setQuestionsAndAnswers(shuffledFlashcards);
             setCurrentCardIndex(0);
         } else {
-            fetchFlashcards(); // Reset to original order if needed
+            fetchFlashcards(); 
         }
     };
 
@@ -107,7 +104,6 @@ const FlashcardPage: React.FC = () => {
         setTimerModalOpen(false);
     };
 
-    // Handle adding new flashcard
     const handleAddQuestion = async (question: string, answer: string) => {
         const newFlashcard = { question, answer };
         const updatedFlashcards = [...questionsAndAnswers, newFlashcard];
@@ -222,6 +218,9 @@ const FlashcardPage: React.FC = () => {
                                 }}
                             >
                                 <CardContent>
+                                    <Typography sx={{ fontSize: '0.875rem', position: 'absolute', top: 10, left: 10, color: theme.palette.primary.main }}>
+                                        Question
+                                    </Typography>
                                     <Typography variant="h5">
                                         {currentQA?.question}
                                     </Typography>
@@ -242,6 +241,9 @@ const FlashcardPage: React.FC = () => {
                                 }}
                             >
                                 <CardContent>
+                                    <Typography sx={{ fontSize: '0.875rem', position: 'absolute', top: 10, left: 10, color: theme.palette.primary.main }}>
+                                        Answer
+                                    </Typography>
                                     <Typography variant="h5">
                                         {currentQA?.answer}
                                     </Typography>
