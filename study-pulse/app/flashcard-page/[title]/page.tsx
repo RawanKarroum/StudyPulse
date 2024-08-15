@@ -10,7 +10,7 @@ import TimerModal from '../../components/TimerModal/page';
 import Navbar from '../../components/RightNavbar/page';
 import CountdownTimer from '../../components/CountdownTimer/page';
 import { createTheme } from '@mui/material/styles';
-import LeftNavbar from '../../components/LeftNavbar/page'; 
+import LeftNavbar from '../../components/AddButton/page'; 
 
 const FlashcardPage: React.FC = () => {
     const [questionsAndAnswers, setQuestionsAndAnswers] = useState<{ question: string, answer: string }[]>([]);
