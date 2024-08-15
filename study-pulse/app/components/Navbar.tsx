@@ -15,6 +15,10 @@ export default function Navbar() {
     router.push('/public-flash-cards');
   };
 
+  const handleSubscriptionClick = () => {
+    router.push('/subscription');
+  };
+
   return (
     <AppBar position="static" sx={{ backgroundColor: '#651fff' }}>
       <Toolbar>
@@ -39,6 +43,7 @@ export default function Navbar() {
               backgroundColor: '#f0f0f0', // Slightly darker white on hover
             },
           }}
+          onClick={handleSubscriptionClick}
         >
           Upgrade to Study Pulse Plus
         </Button>

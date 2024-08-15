@@ -24,13 +24,22 @@ import CreateNewFolderIcon from "@mui/icons-material/CreateNewFolder";
 import { createTheme } from "@mui/material/styles";
 import React, { useEffect, useState, FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { setDoc, doc, collection, getDocs, query, where } from "firebase/firestore";
+import {
+  setDoc,
+  doc,
+  collection,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
 import { db } from "../config/firebase";
 import { useUserData } from "../hooks/useUserData";
 
 export default function Dashboard() {
   const { userData, isSignedIn } = useUserData();
-  const [flashcardSets, setFlashcardSets] = useState<{ title: string; terms: number }[]>([]);
+  const [flashcardSets, setFlashcardSets] = useState<
+    { title: string; terms: number }[]
+  >([]);
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState<string>("");
   const [textContent, setTextContent] = useState<string>("");
@@ -38,17 +47,22 @@ export default function Dashboard() {
   const [uploadStatus, setUploadStatus] = useState<string>("");
   const router = useRouter();
 
+  const maxFreeFlashcards = 5;
+
   useEffect(() => {
     const fetchFlashcardSets = async () => {
       try {
         if (userData?.id) {
-          const q = query(collection(db, "flashcards"), where("userId", "==", userData.id));
+          const q = query(
+            collection(db, "flashcards"),
+            where("userId", "==", userData.id)
+          );
           const querySnapshot = await getDocs(q);
           const flashcards = querySnapshot.docs.map((doc) => {
             const data = doc.data();
             return {
               title: doc.id,
-              terms: data.flashcards?.length || 0, // Get the length of the flashcards array
+              terms: data.flashcards?.length || 0,
             };
           });
           setFlashcardSets(flashcards);
@@ -66,7 +80,16 @@ export default function Dashboard() {
   };
 
   const handleClickOpen = () => {
-    setOpen(true);
+    if (
+      userData?.membership === "free" &&
+      flashcardSets.length >= maxFreeFlashcards
+    ) {
+      setUploadStatus(
+        `Upgrade to create more than ${maxFreeFlashcards} flashcard sets.`
+      );
+    } else {
+      setOpen(true);
+    }
   };
 
   const handleClose = () => {
@@ -133,11 +156,13 @@ export default function Dashboard() {
 
       await setDoc(doc(db, "flashcards", title), {
         flashcards: data.questionsAndAnswers,
-        userId: userData?.id, // Store the user ID in the document
+        userId: userData?.id,
       });
 
       router.push(
-        `/flashcard-page/${encodeURIComponent(title)}?aiResponse=${encodeURIComponent(
+        `/flashcard-page/${encodeURIComponent(
+          title
+        )}?aiResponse=${encodeURIComponent(
           JSON.stringify(data.questionsAndAnswers)
         )}`
       );
@@ -150,10 +175,10 @@ export default function Dashboard() {
   const theme = createTheme({
     palette: {
       primary: {
-        main: "#651fff", // Lighter purple for buttons
+        main: "#651fff",
       },
       secondary: {
-        main: "#4615b2", // Darker purple for text
+        main: "#4615b2",
       },
       background: {
         default: "#f5f5f5",
@@ -163,15 +188,15 @@ export default function Dashboard() {
       fontFamily: '"Poppins", "Roboto", "Helvetica", "Arial", sans-serif',
       h2: {
         fontWeight: 700,
-        color: "#4615b2", // Darker purple for the title
+        color: "#4615b2",
       },
       h6: {
         fontWeight: 500,
-        color: "#4615b2", // Darker purple for the description
+        color: "#4615b2",
       },
       body1: {
         fontWeight: 400,
-        color: "#fff", // White text inside cards
+        color: "#fff",
       },
     },
     components: {
@@ -179,13 +204,13 @@ export default function Dashboard() {
         styleOverrides: {
           html: {
             height: "100%",
-            overflow: "hidden", // Prevent scrolling on the entire page
+            overflow: "hidden",
           },
           body: {
             height: "100%",
             background: "linear-gradient(135deg, #4615b2 0%, #651fff 100%)",
             color: "#FFFFFF",
-            overflow: "hidden", // Prevent scrolling on the entire page
+            overflow: "hidden",
           },
         },
       },
@@ -205,15 +230,14 @@ export default function Dashboard() {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          height: "100vh", // Ensure the container fills the entire viewport height
+          height: "100vh",
           textAlign: "center",
           backgroundColor: theme.palette.background.default,
-          color: theme.palette.secondary.main, // Use dark purple for text color
+          color: theme.palette.secondary.main,
           padding: 4,
-          overflow: "hidden", // Prevent scrolling inside the container
+          overflow: "hidden",
         }}
       >
-        {/* Title and Description */}
         <Box sx={{ textAlign: "center", marginBottom: 4 }}>
           <Typography variant="h2" sx={{ marginBottom: 2 }}>
             Study Pulse
@@ -224,7 +248,6 @@ export default function Dashboard() {
           </Typography>
         </Box>
 
-        {/* Top Row with Buttons */}
         <Box
           sx={{
             display: "flex",
@@ -236,25 +259,25 @@ export default function Dashboard() {
         >
           <Box
             sx={{
-              width: 300, // Increased width
-              height: 350, // Increased height for more vertical space
+              width: 300,
+              height: 350,
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
               alignItems: "center",
-              backgroundColor: theme.palette.primary.main, // Use lighter purple for buttons
+              backgroundColor: theme.palette.primary.main,
               color: "#fff",
               boxShadow: "0px 6px 20px rgba(0, 0, 0, 0.3)",
               borderRadius: 4,
               padding: 2,
-              cursor: "pointer", // Make cursor a pointer
+              cursor: "pointer",
               "&:hover": {
-                backgroundColor: "#5117e0", // Slightly darker shade for hover
+                backgroundColor: "#5117e0",
               },
             }}
-            onClick={handleClickOpen} // Open dialog on click
+            onClick={handleClickOpen}
           >
-            <AutoAwesomeIcon sx={{ fontSize: 60, marginBottom: 2 }} /> {/* Increased icon size */}
+            <AutoAwesomeIcon sx={{ fontSize: 60, marginBottom: 2 }} />
             <Typography variant="h5">Generate Flashcards</Typography>
             <Typography variant="body2" sx={{ marginTop: 2 }}>
               Automatically create flashcards from your notes.
@@ -263,24 +286,25 @@ export default function Dashboard() {
 
           <Box
             sx={{
-              width: 300, // Increased width
-              height: 350, // Increased height for more vertical space
+              width: 300,
+              height: 350,
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
               alignItems: "center",
-              backgroundColor: theme.palette.primary.main, // Use lighter purple for buttons
+              backgroundColor: theme.palette.primary.main,
               color: "#fff",
               boxShadow: "0px 6px 20px rgba(0, 0, 0, 0.3)",
               borderRadius: 4,
               padding: 2,
-              cursor: "pointer", // Make cursor a pointer
+              cursor: "pointer",
               "&:hover": {
-                backgroundColor: "#5117e0", // Slightly darker shade for hover
+                backgroundColor: "#5117e0",
               },
             }}
+            onClick={handleClickOpen}
           >
-            <CreateNewFolderIcon sx={{ fontSize: 60, marginBottom: 2 }} /> {/* Increased icon size */}
+            <CreateNewFolderIcon sx={{ fontSize: 60, marginBottom: 2 }} />
             <Typography variant="h5">Create Flashcards</Typography>
             <Typography variant="body2" sx={{ marginTop: 2 }}>
               Manually build your own flashcards.
@@ -288,68 +312,81 @@ export default function Dashboard() {
           </Box>
         </Box>
 
-        {/* Flashcard Title */}
         <Typography
           variant="h5"
-          sx={{
-            marginBottom: 2,
-            color: theme.palette.secondary.main,
-          }}
+          sx={{ marginBottom: 2, color: theme.palette.secondary.main }}
         >
           Your Flashcard Sets
         </Typography>
 
-        {/* Flashcard section below */}
+        <Box sx={{ textAlign: "center", marginBottom: 4 }}>
+          {userData?.membership === "free" ? (
+            <Typography variant="h6">
+              {flashcardSets.length}/{maxFreeFlashcards} Flashcard Sets Created
+            </Typography>
+          ) : (
+            <Typography variant="h6">Unlimited Flashcard Sets</Typography>
+          )}
+        </Box>
+
         <Box
           sx={{
-            width: "60%", // Container width
+            width: "60%",
             maxHeight: "40%",
-            overflowY: "auto", // Scroll if content exceeds maxHeight
+            overflowY: "auto",
             padding: 2,
             borderRadius: 4,
           }}
         >
-          <Box
-            sx={{
-              display: "flex",
-              gap: 2, // Reduced gap between flashcards
-              flexWrap: "wrap",
-              justifyContent: "center", // Align cards in the center
-            }}
-          >
-            {flashcardSets.map((flashcard, index) => (
-              <Box
-                key={index}
-                sx={{
-                  width: 260, // Increased width
-                  height: 160, // Increased height
-                  backgroundColor: theme.palette.primary.main,
-                  color: "#fff",
-                  padding: 2,
-                  boxShadow: "0px 6px 20px rgba(0, 0, 0, 0.3)",
-                  borderRadius: 4, // Rounded corners
-                  cursor: "pointer", // Make cursor a pointer
-                  "&:hover": {
-                    backgroundColor: "#5117e0",
-                  },
-                  textAlign: "center",
-                }}
-                onClick={() => handleCardClick(flashcard.title)}
-              >
-                <Typography variant="h6" component="div" sx={{ color: "#fff" }}>
-                  {flashcard.title}
-                </Typography>
-                <Chip
-                  label={`${flashcard.terms} terms`}
+          {flashcardSets.length > 0 ? (
+            <Box
+              sx={{
+                display: "flex",
+                gap: 2,
+                flexWrap: "wrap",
+                justifyContent: "center",
+              }}
+            >
+              {flashcardSets.map((flashcard, index) => (
+                <Box
+                  key={index}
                   sx={{
-                    marginTop: 1,
-                    backgroundColor: "#fff", // White background for the Chip
-                    color: theme.palette.secondary.main, // Dark purple text for the Chip
+                    width: 260,
+                    height: 160,
+                    backgroundColor: theme.palette.primary.main,
+                    color: "#fff",
+                    padding: 2,
+                    boxShadow: "0px 6px 20px rgba(0, 0, 0, 0.3)",
+                    borderRadius: 4,
+                    cursor: "pointer",
+                    "&:hover": {
+                      backgroundColor: "#5117e0",
+                    },
+                    textAlign: "center",
                   }}
-                />
-              </Box>
-            ))}
-          </Box>
+                  onClick={() => handleCardClick(flashcard.title)}
+                >
+                  <Typography
+                    variant="h6"
+                    component="div"
+                    sx={{ color: "#fff" }}
+                  >
+                    {flashcard.title}
+                  </Typography>
+                  <Chip
+                    label={`${flashcard.terms} terms`}
+                    sx={{
+                      marginTop: 1,
+                      backgroundColor: "#fff",
+                      color: theme.palette.secondary.main,
+                    }}
+                  />
+                </Box>
+              ))}
+            </Box>
+          ) : (
+            <Typography variant="h6">No flashcards available.</Typography>
+          )}
         </Box>
 
         <Dialog open={open} onClose={handleClose}>
@@ -382,7 +419,14 @@ export default function Dashboard() {
             <Button onClick={handleClose} color="secondary">
               Cancel
             </Button>
-            <Button onClick={handleSubmit} color="primary">
+            <Button
+              onClick={handleSubmit}
+              color="primary"
+              disabled={
+                userData?.membership === "free" &&
+                flashcardSets.length >= maxFreeFlashcards
+              }
+            >
               Generate Flashcards
             </Button>
           </DialogActions>
